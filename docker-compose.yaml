@@ -1,0 +1,46 @@
+version: '3.8'
+
+volumes:
+  pgdata:
+    driver: local
+
+services:
+  db:
+    container_name: ewallet-db
+    image: postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    env_file:
+      .env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} ewallet" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  migrate:
+    image: migrate/migrate
+    restart: on-failure
+    env_file:
+      - .env
+    volumes:
+      - ./schema/postgresql:/migrations
+    command: [ "-path", "/migrations", "-database",  "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
+    depends_on:
+      - db
+    links:
+      - db
+  app:
+    container_name: ewallet-app
+    restart: on-failure
+    depends_on:
+      - db
+    image: ewallet:latest
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./configs:/app/configs
+    env_file:
+      - .env
