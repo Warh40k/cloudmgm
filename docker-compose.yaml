@@ -6,34 +6,29 @@ volumes:
 
 services:
   db:
-    container_name: ewallet-db
+    container_name: cloudmgm-db
     image: postgres
     restart: always
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - pgdata:/var/utils/postgresql/data
     env_file:
       .env
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} ewallet" ]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-  migrate:
-    image: migrate/migrate
-    restart: on-failure
-    env_file:
-      - .env
-    volumes:
-      - ./schema/postgresql:/migrations
-    command: [ "-path", "/migrations", "-database",  "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
-    depends_on:
-      - db
-    links:
-      - db
+#  migrate:
+#    image: migrate/migrate
+#    restart: on-failure
+#    env_file:
+#      - .env
+#    volumes:
+#      - ./schema/postgresql:/migrations
+#    command: [ "-path", "/migrations", "-database",  "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?sslmode=disable", "up" ]
+#    depends_on:
+#      - db
+#    links:
+#      - db
   app:
-    container_name: ewallet-app
+    container_name: cloudmgm-server
     restart: on-failure
     depends_on:
       - db
@@ -41,6 +36,6 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./configs:/app/configs
+      - ./configs:/server/configs
     env_file:
       - .env

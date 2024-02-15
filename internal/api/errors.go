@@ -1,6 +1,13 @@
-package app
+package api
 
-// NotFoundError not found
+import "errors"
+
+var (
+	ErrNotFound   = errors.New("not found")
+	ErrBadRequest = errors.New("bad request")
+	ErrInternal   = errors.New("internal errors")
+)
+
 type NotFoundError struct {
 	Message string `json:"message"`
 	Err     error
@@ -14,7 +21,6 @@ func (e NotFoundError) Unwrap() error {
 	return e.Err
 }
 
-// BadRequestError bad request
 type BadRequestError struct {
 	Message string `json:"message"`
 	Err     error
@@ -28,7 +34,6 @@ func (e BadRequestError) Unwrap() error {
 	return e.Err
 }
 
-// InternalError internal error
 type InternalError struct {
 	Message string `json:"message"`
 	Err     error

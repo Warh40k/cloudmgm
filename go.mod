@@ -3,10 +3,14 @@ module github.com/Warh40k/cloud-manager
 go 1.22.0
 
 require (
+	github.com/ajg/form v1.5.1 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
+	github.com/go-chi/chi/v5 v5.0.11 // indirect
+	github.com/go-chi/render v1.0.3 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/jackc/pgx v3.6.2+incompatible // indirect
 	github.com/jmoiron/sqlx v1.3.5 // indirect
+	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/magiconair/properties v1.8.7 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect

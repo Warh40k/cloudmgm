@@ -1,19 +1,12 @@
 package repository
 
 import (
-	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
 )
 
-const (
-	walletsTable      = "wallets"
-	transactionsTable = "transactions"
-	defaultBalance    = 100
-	idLength          = 16
-)
+const ()
 
 type Config struct {
 	Host     string
@@ -38,12 +31,4 @@ func NewPostgresDB(cfg Config) (*sqlx.DB, error) {
 	}
 
 	return db, nil
-}
-
-func GenerateId() (string, error) {
-	b := make([]byte, idLength)
-	if _, err := rand.Read(b); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(b), nil
 }
