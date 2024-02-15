@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"io"
-	"log"
 	"net/http"
 )
 
@@ -26,17 +25,4 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	users = append(users, user)
-}
-
-func (h *Handler) GetAllUsers(w http.ResponseWriter, r *http.Request) {
-	resp, err := json.Marshal(users)
-	if err != nil {
-		log.Fatalf("Jopa %s", err.Error())
-	}
-	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
-}
-
-func (h *Handler) GetUserById(w http.ResponseWriter, r *http.Request) {
-
 }

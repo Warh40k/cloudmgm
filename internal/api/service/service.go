@@ -6,14 +6,16 @@ import (
 )
 
 type Service struct {
+	Authorization
 }
 
 type Authorization interface {
-	Register(user domain.User) (int, error)
-	GenerateToken(username, password string) (string, error)
-	CheckToken(token string) (bool, error)
+	SignUp(user domain.User) (int, error)
+	SignIn(username, password string) (int, error)
 }
 
 func NewService(repos *repository.Repository) *Service {
-	return &Service{}
+	return &Service{
+		Authorization: NewAuthService(repos.Authorization),
+	}
 }

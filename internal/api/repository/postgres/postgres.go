@@ -1,4 +1,4 @@
-package repository
+package postgres
 
 import (
 	"fmt"
@@ -6,7 +6,11 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-const ()
+const (
+	usersTable    = "users"
+	vmsTable      = "vmachines"
+	usersVmsTable = "users_vmachines"
+)
 
 type Config struct {
 	Host     string
