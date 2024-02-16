@@ -75,5 +75,8 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) Pong(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte(h.services.Pong()))
 }

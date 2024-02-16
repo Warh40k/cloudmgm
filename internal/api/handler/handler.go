@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/service"
+	middleware2 "github.com/Warh40k/cloud-manager/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -23,6 +24,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
+		r.With(middleware2.CheckAuth).Get("/pong", h.Pong)
 	})
 
 	return router

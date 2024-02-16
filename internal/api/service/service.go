@@ -12,6 +12,7 @@ type Service struct {
 type Authorization interface {
 	SignUp(user domain.User) error
 	SignIn(username, password string) (string, error)
+	Pong() string
 }
 
 func NewService(repos *repository.Repository) *Service {
