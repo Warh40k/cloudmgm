@@ -23,10 +23,6 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	router.Route("/api", func(r chi.Router) {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
-		r.Route("/user", func(r chi.Router) {
-			r.Get("/", h.GetAllUsers)
-			r.Get("/{user_id}", h.GetUserById)
-		})
 	})
 
 	return router

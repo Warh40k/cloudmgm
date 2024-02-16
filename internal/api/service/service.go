@@ -10,8 +10,8 @@ type Service struct {
 }
 
 type Authorization interface {
-	SignUp(user domain.User) (int, error)
-	SignIn(username, password string) (int, error)
+	SignUp(user domain.User) error
+	SignIn(username, password string) (string, error)
 }
 
 func NewService(repos *repository.Repository) *Service {
