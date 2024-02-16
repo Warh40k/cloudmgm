@@ -24,7 +24,15 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
-		r.With(middleware2.CheckAuth).Get("/pong", h.Pong)
+		r.With(middleware2.CheckAuth).Get("/ping", h.Pong)
+		r.Route("/machines", func(r chi.Router) {
+			r.Use(middleware2.CheckAuth)
+			r.Get("/", h.ListMachines)
+			r.Get("/{machine_id}", h.GetMachine)
+			r.Post("/", h.CreateMachine)
+			r.Patch("/{machine_id}", h.UpdateMachine)
+			r.Delete("/{machine_id}", h.DeleteMachine)
+		})
 	})
 
 	return router
