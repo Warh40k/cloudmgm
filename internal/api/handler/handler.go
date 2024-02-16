@@ -20,7 +20,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	router.Use(middleware.RequestID)
 	router.Use(middleware.Recoverer)
 
-	router.Route("/api", func(r chi.Router) {
+	router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
 	})

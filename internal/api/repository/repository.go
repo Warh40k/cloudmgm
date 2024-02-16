@@ -1,16 +1,13 @@
 package repository
 
 import (
-	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/jmoiron/sqlx"
 )
 
 type Authorization interface {
 	SignUp(user domain.User) error
-	SignIn(username, password string) (string, error)
-	//GenerateToken(username, password string) (string, error)
-	CheckToken(token string) (bool, error)
+	GetUserByLogin(login string) (domain.User, error)
 }
 
 type Repository struct {
@@ -19,6 +16,6 @@ type Repository struct {
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
-		Authorization: postgres.NewAuthPostgres(db),
+		Authorization: NewAuthPostgres(db),
 	}
 }

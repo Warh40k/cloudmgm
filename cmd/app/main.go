@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/handler"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
-	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
 	"github.com/Warh40k/cloud-manager/internal/server"
 	"github.com/joho/godotenv"
@@ -28,7 +27,7 @@ func main() {
 		logrus.Fatalf("Ошибка чтения переменных окружения: %s", err.Error())
 	}
 
-	config := postgres.Config{
+	config := repository.Config{
 		Host:     viper.GetString("db.host"),
 		Port:     viper.GetString("db.port"),
 		Username: viper.GetString("db.username"),
@@ -36,7 +35,7 @@ func main() {
 		DBName:   viper.GetString("db.dbname"),
 		SSLMode:  viper.GetString("db.sslmode"),
 	}
-	db, err := postgres.NewPostgresDB(config)
+	db, err := repository.NewPostgresDB(config)
 
 	if err != nil {
 		logrus.Fatalf("Ошибка подключения к базе данных: %s", err.Error())
