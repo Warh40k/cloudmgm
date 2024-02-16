@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"context"
 	"github.com/Warh40k/cloud-manager/internal/api/service/utils"
 	"net/http"
 	"strings"
@@ -14,17 +15,19 @@ func CheckAuth(next http.Handler) http.Handler {
 		if len(headSplit) == 2 {
 			token = headSplit[1]
 		} else {
-			w.WriteHeader(http.StatusBadRequest)
+			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
-		_, err := utils.CheckJWT(token)
+		id, err := utils.CheckJWT(token)
 
 		if err != nil {
 			w.WriteHeader(http.StatusForbidden)
 			return
 		}
 
-		next.ServeHTTP(w, r)
+		ctx := context.WithValue(r.Context(), "user", id)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
