@@ -33,9 +33,36 @@ func (r VmPostgres) GetVm(id uuid.UUID) (domain.VirtualMachine, error) {
 	panic("implement me")
 }
 
-func (r VmPostgres) CreateVm(id uuid.UUID, machine domain.VirtualMachine) error {
-	//TODO implement me
-	panic("implement me")
+func (r VmPostgres) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
+	vmId, err := uuid.NewUUID()
+	if err != nil {
+		return ErrInternal
+	}
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return ErrInternal
+	}
+	vmQuery := fmt.Sprintf(`INSERT INTO %s(id,title,description,status) 
+								VALUES($1,$2,$3,0)`, vmsTable)
+	_, err = tx.Exec(vmQuery, vmId, machine.Label, machine.Description)
+	if err != nil {
+		tx.Rollback()
+		return ErrInternal
+	}
+	userVmId, err := uuid.NewUUID()
+	if err != nil {
+		tx.Rollback()
+		return ErrInternal
+	}
+	userVmQuery := fmt.Sprintf(`INSERT INTO %s(id,user_id, vm_id) 
+								VALUES($1,$2,$3)`, usersVmsTable)
+	_, err = tx.Exec(userVmQuery, userVmId, userId, vmId)
+	if err != nil {
+		tx.Rollback()
+		return ErrInternal
+	}
+
+	return tx.Commit()
 }
 
 func (r VmPostgres) DeleteVm(id uuid.UUID) error {

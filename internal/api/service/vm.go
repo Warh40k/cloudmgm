@@ -24,8 +24,7 @@ func (v VmService) GetVm(userId uuid.UUID) (domain.VirtualMachine, error) {
 }
 
 func (v VmService) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
-	//TODO implement me
-	panic("implement me")
+	return v.repos.CreateVm(userId, machine)
 }
 
 func (v VmService) DeleteVm(userId uuid.UUID) error {

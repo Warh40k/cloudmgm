@@ -6,10 +6,9 @@ import (
 )
 
 type VirtualMachine struct {
-	Id          uuid.UUID `json:"id,omitempty" db:"id"`
-	Label       string    `json:"label,omitempty" db:"title"`
-	Description string    `json:"description,omitempty" db:"description"`
-	OS          string    `json:"os,omitempty" db:"os"`
-	Created     time.Time `json:"date_create" db:"created"`
-	Size        float64   `json:"size,omitempty" db:"size"`
+	Id          uuid.UUID `json:"-" db:"id"`
+	Label       string    `json:"title" db:"title" validate:"required"`
+	Description string    `json:"description" db:"description" validate:"required"`
+	Created     time.Time `json:"-" db:"created"`
+	Size        float64   `json:"-" db:"size"`
 }

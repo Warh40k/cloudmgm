@@ -2,7 +2,10 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/domain"
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"net/http"
 )
@@ -39,8 +42,32 @@ func (h *Handler) GetMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateMachine(w http.ResponseWriter, r *http.Request) {
-	//TODO implement
-	panic("not implemented")
+	userId, ok := r.Context().Value("user").(uuid.UUID)
+	if !ok {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var vm domain.VirtualMachine
+
+	err := json.NewDecoder(r.Body).Decode(&vm)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	validate := validator.New()
+	err = validate.Struct(vm)
+	if err != nil {
+		var errs validator.ValidationErrors
+		errors.As(err, &errs)
+		http.Error(w, fmt.Sprintf("Validation error: %s", errs), http.StatusBadRequest)
+	}
+	err = h.services.CreateVm(userId, vm)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
 }
 
