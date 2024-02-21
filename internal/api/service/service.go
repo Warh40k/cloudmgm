@@ -21,8 +21,9 @@ type Vm interface {
 	ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error)
 	GetVm(userId uuid.UUID) (domain.VirtualMachine, error)
 	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error
-	DeleteVm(userId uuid.UUID) error
-	ModifyVm(userId uuid.UUID, machine domain.VirtualMachine) error
+	DeleteVm(vmId uuid.UUID) error
+	ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error
+	CheckOwnership(userId, vmId uuid.UUID) error
 }
 
 func NewService(repos *repository.Repository) *Service {

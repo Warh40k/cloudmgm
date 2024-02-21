@@ -10,29 +10,32 @@ type VmService struct {
 	repos repository.Vm
 }
 
-func (v VmService) ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error) {
-	vms, err := v.repos.ListVm(userId)
+func (s VmService) CheckOwnership(userId, vmId uuid.UUID) error {
+	return s.repos.CheckOwnership(userId, vmId)
+}
+
+func (s VmService) ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error) {
+	vms, err := s.repos.ListVm(userId)
 	if err != nil {
 		return nil, ErrInternal
 	}
 	return vms, nil
 }
 
-func (v VmService) GetVm(userId uuid.UUID) (domain.VirtualMachine, error) {
+func (s VmService) GetVm(vmId uuid.UUID) (domain.VirtualMachine, error) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (v VmService) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
-	return v.repos.CreateVm(userId, machine)
+func (s VmService) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
+	return s.repos.CreateVm(userId, machine)
 }
 
-func (v VmService) DeleteVm(userId uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+func (s VmService) DeleteVm(vmId uuid.UUID) error {
+	return s.repos.DeleteVm(vmId)
 }
 
-func (v VmService) ModifyVm(id uuid.UUID, machine domain.VirtualMachine) error {
+func (s VmService) ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error {
 	//TODO implement me
 	panic("implement me")
 }
