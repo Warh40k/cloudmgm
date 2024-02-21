@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -13,10 +14,11 @@ type Authorization interface {
 
 type Vm interface {
 	ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error)
-	GetVm(userId uuid.UUID) (domain.VirtualMachine, error)
+	GetVm(vmId uuid.UUID) (domain.VirtualMachine, error)
 	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error
-	DeleteVm(userId uuid.UUID) error
-	ModifyVm(userId uuid.UUID, machine domain.VirtualMachine) error
+	DeleteVm(vmId uuid.UUID) error
+	ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error
+	CheckOwnership(userId, vmId uuid.UUID) error
 }
 
 type Repository struct {
@@ -26,7 +28,7 @@ type Repository struct {
 
 func NewRepository(db *sqlx.DB) *Repository {
 	return &Repository{
-		Authorization: NewAuthPostgres(db),
-		Vm:            NewVmPostgres(db),
+		Authorization: postgres.NewAuthPostgres(db),
+		Vm:            postgres.NewVmPostgres(db),
 	}
 }
