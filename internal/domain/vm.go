@@ -10,5 +10,6 @@ type VirtualMachine struct {
 	Label       string    `json:"title" db:"title" validate:"required"`
 	Description string    `json:"description" db:"description" validate:"required"`
 	Created     time.Time `json:"-" db:"created"`
+	Status      int       `json:"status" db:"status"`
 	Size        float64   `json:"-" db:"size"`
 }

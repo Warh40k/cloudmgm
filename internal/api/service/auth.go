@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
+	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/api/service/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ func (s *AuthService) SignUp(user domain.User) error {
 
 	err = s.repos.SignUp(user)
 	if err != nil {
-		if errors.Is(err, repository.ErrUnique) {
+		if errors.Is(err, postgres.ErrUnique) {
 			return ErrBadRequest
 		} else {
 			return ErrInternal
@@ -48,7 +49,7 @@ func (s *AuthService) SignUp(user domain.User) error {
 func (s *AuthService) SignIn(login, password string) (string, error) {
 	user, err := s.repos.GetUserByLogin(login)
 	if err != nil {
-		if errors.Is(err, repository.ErrNoRows) {
+		if errors.Is(err, postgres.ErrNoRows) {
 			return "", ErrNotFound
 		} else {
 			return "", ErrInternal

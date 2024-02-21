@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func CheckAuth(next http.Handler) http.Handler {
+func CheckAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		var token string
 		authHeader := r.Header.Get("Authorization")
