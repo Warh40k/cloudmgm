@@ -104,6 +104,22 @@ func (h *Handler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) UpdateMachine(w http.ResponseWriter, r *http.Request) {
-	//TODO implement
-	panic("not implemented")
+	vmId, err := uuid.Parse(chi.URLParam(r, "machine_id"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	var vm domain.VirtualMachine
+	err = json.NewDecoder(r.Body).Decode(&vm)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	vm.Id = vmId
+	err = h.services.UpdateVm(vm)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 }

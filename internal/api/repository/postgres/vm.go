@@ -38,8 +38,13 @@ func (r VmPostgres) ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error) {
 }
 
 func (r VmPostgres) GetVm(vmId uuid.UUID) (domain.VirtualMachine, error) {
-	//TODO implement me
-	panic("implement me")
+	var vm domain.VirtualMachine
+	query := fmt.Sprintf(`SELECT * FROM %s vms where vms.id = $1`, vmsTable)
+	if err := r.db.Get(&vm, query, vmId); err != nil {
+		return vm, ErrNoRows
+	}
+
+	return vm, nil
 }
 
 func (r VmPostgres) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
@@ -84,7 +89,24 @@ func (r VmPostgres) DeleteVm(vmId uuid.UUID) error {
 	return nil
 }
 
-func (r VmPostgres) ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error {
-	//TODO implement me
-	panic("implement me")
+func (r VmPostgres) UpdateVm(machine domain.VirtualMachine) error {
+	query := fmt.Sprintf(`UPDATE %s 
+								SET title = $1, description = $2 
+								WHERE id = $3`, vmsTable)
+	res, err := r.db.Exec(query, machine.Label, machine.Description, machine.Id)
+
+	if err != nil {
+		return ErrInternal
+	}
+
+	count, err := res.RowsAffected()
+	if err != nil {
+		return ErrInternal
+	}
+
+	if count == 0 {
+		return ErrNoRows
+	}
+
+	return nil
 }

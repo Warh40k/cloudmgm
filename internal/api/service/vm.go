@@ -34,9 +34,8 @@ func (s VmService) DeleteVm(vmId uuid.UUID) error {
 	return s.repos.DeleteVm(vmId)
 }
 
-func (s VmService) ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error {
-	//TODO implement me
-	panic("implement me")
+func (s VmService) UpdateVm(machine domain.VirtualMachine) error {
+	return s.repos.UpdateVm(machine)
 }
 
 func NewVmService(repos repository.Vm) *VmService {
