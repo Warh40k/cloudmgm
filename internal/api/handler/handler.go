@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/service"
-	middleware2 "github.com/Warh40k/cloud-manager/internal/middleware"
+	genericMiddleware "github.com/Warh40k/cloud-manager/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -25,11 +25,11 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
 		r.Route("/machines", func(r chi.Router) {
-			r.Use(middleware2.CheckAuthMiddleware)
+			r.Use(genericMiddleware.CheckAuth)
 			r.Get("/", h.ListMachines)
-			r.With(h.CheckOwnership).Get("/{machine_id}", h.GetMachine)
 			r.Post("/", h.CreateMachine)
-			r.With(h.CheckOwnership).Patch("/{machine_id}", h.UpdateMachine)
+			r.With(h.CheckOwnership).Get("/{machine_id}", h.GetMachine)
+			r.With(h.CheckOwnership).Put("/{machine_id}", h.UpdateMachine)
 			r.With(h.CheckOwnership).Delete("/{machine_id}", h.DeleteMachine)
 		})
 	})

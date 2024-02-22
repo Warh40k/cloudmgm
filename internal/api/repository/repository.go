@@ -17,7 +17,7 @@ type Vm interface {
 	GetVm(vmId uuid.UUID) (domain.VirtualMachine, error)
 	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error
 	DeleteVm(vmId uuid.UUID) error
-	ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error
+	UpdateVm(machine domain.VirtualMachine) error
 	CheckOwnership(userId, vmId uuid.UUID) error
 }
 
