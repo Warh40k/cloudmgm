@@ -23,8 +23,7 @@ func (s VmService) ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error) {
 }
 
 func (s VmService) GetVm(vmId uuid.UUID) (domain.VirtualMachine, error) {
-	//TODO implement me
-	panic("implement me")
+	return s.repos.GetVm(vmId)
 }
 
 func (s VmService) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {

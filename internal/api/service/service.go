@@ -19,7 +19,7 @@ type Authorization interface {
 
 type Vm interface {
 	ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error)
-	GetVm(userId uuid.UUID) (domain.VirtualMachine, error)
+	GetVm(vmId uuid.UUID) (domain.VirtualMachine, error)
 	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error
 	DeleteVm(vmId uuid.UUID) error
 	ModifyVm(vmId uuid.UUID, machine domain.VirtualMachine) error

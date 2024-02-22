@@ -27,10 +27,10 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Route("/machines", func(r chi.Router) {
 			r.Use(middleware2.CheckAuthMiddleware)
 			r.Get("/", h.ListMachines)
-			r.Get("/{machine_id}", h.GetMachine)
+			r.With(h.CheckOwnership).Get("/{machine_id}", h.GetMachine)
 			r.Post("/", h.CreateMachine)
-			r.Patch("/{machine_id}", h.UpdateMachine)
-			r.Delete("/{machine_id}", h.DeleteMachine)
+			r.With(h.CheckOwnership).Patch("/{machine_id}", h.UpdateMachine)
+			r.With(h.CheckOwnership).Delete("/{machine_id}", h.DeleteMachine)
 		})
 	})
 

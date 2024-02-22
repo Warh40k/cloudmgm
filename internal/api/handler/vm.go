@@ -11,24 +11,15 @@ import (
 	"net/http"
 )
 
-func (h *Handler) CheckVmOwnership(userId, vmId uuid.UUID) bool {
-	err := h.services.CheckOwnership(userId, vmId)
-	if err != nil {
-		return false
-	}
-
-	return true
-}
-
 // TODO Реализовать методы
 func (h *Handler) ListMachines(w http.ResponseWriter, r *http.Request) {
-	id, ok := r.Context().Value("user").(uuid.UUID)
+	userId, ok := r.Context().Value("user").(uuid.UUID)
 	if !ok {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	vms, err := h.services.ListVm(id)
+	vms, err := h.services.ListVm(userId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -47,8 +38,25 @@ func (h *Handler) ListMachines(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) GetMachine(w http.ResponseWriter, r *http.Request) {
-	//TODO implement
-	panic("not implemented")
+	vmId, err := uuid.Parse(chi.URLParam(r, "machine_id"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	vm, err := h.services.GetVm(vmId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	resp, err := json.Marshal(vm)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(resp)
 }
 
 func (h *Handler) CreateMachine(w http.ResponseWriter, r *http.Request) {
@@ -82,20 +90,9 @@ func (h *Handler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteMachine(w http.ResponseWriter, r *http.Request) {
-	userId, ok := r.Context().Value("user").(uuid.UUID)
-	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
 	vmId, err := uuid.Parse(chi.URLParam(r, "machine_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	if !h.CheckVmOwnership(userId, vmId) {
-		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
