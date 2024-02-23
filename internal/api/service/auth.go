@@ -18,23 +18,19 @@ func NewAuthService(repos repository.Authorization) *AuthService {
 	return &AuthService{repos: repos}
 }
 
-func (s *AuthService) Pong() string {
-	return "Pong"
-}
-
 func (s *AuthService) SignUp(user domain.User) error {
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return fmt.Errorf("error creating uuid: %w", err)
+	if len(user.Password) < 8 {
+		return ErrBadRequest
 	}
+	id := uuid.New()
 	user.Id = id
-	hash, err := utils.HashPassword(user.PasswordHash)
+	hash, err := utils.HashPassword(user.Password)
 	if err != nil {
 		return fmt.Errorf("error hashing password: %w", err)
 	}
 	user.PasswordHash = hash
 
-	err = s.repos.SignUp(user)
+	_, err = s.repos.SignUp(user)
 	if err != nil {
 		if errors.Is(err, postgres.ErrUnique) {
 			return ErrBadRequest

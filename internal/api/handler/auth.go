@@ -5,13 +5,14 @@ import (
 	"errors"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
 	"github.com/Warh40k/cloud-manager/internal/domain"
+	"github.com/go-playground/validator/v10"
 	"io"
 	"net/http"
 )
 
 type AuthRequest struct {
-	Login    string `json:"login" binding:"required"`
-	Password string `json:"password" binding:"required"`
+	Login    string `json:"login" validate:"required"`
+	Password string `json:"password" validate:"required"`
 }
 
 type SignInResponse struct {
@@ -66,6 +67,13 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	validate := validator.New()
+	err = validate.Struct(user)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
 	err = h.services.SignUp(user)
 	if err != nil {
 		if errors.Is(err, service.ErrBadRequest) {
@@ -75,8 +83,4 @@ func (h *Handler) SignUp(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
-}
-
-func (h *Handler) Pong(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte(h.services.Pong()))
 }
