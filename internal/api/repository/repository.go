@@ -8,14 +8,14 @@ import (
 )
 
 type Authorization interface {
-	SignUp(user domain.User) error
+	SignUp(user domain.User) (uuid.UUID, error)
 	GetUserByLogin(login string) (domain.User, error)
 }
 
 type Vm interface {
 	ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error)
 	GetVm(vmId uuid.UUID) (domain.VirtualMachine, error)
-	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error
+	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) (uuid.UUID, error)
 	DeleteVm(vmId uuid.UUID) error
 	UpdateVm(machine domain.VirtualMachine) error
 	CheckOwnership(userId, vmId uuid.UUID) error

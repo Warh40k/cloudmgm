@@ -81,7 +81,7 @@ func (h *Handler) CreateMachine(w http.ResponseWriter, r *http.Request) {
 		errors.As(err, &errs)
 		http.Error(w, fmt.Sprintf("Validation error: %s", errs), http.StatusBadRequest)
 	}
-	err = h.services.CreateVm(userId, vm)
+	_, err = h.services.CreateVm(userId, vm)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

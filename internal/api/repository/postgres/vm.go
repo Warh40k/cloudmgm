@@ -47,36 +47,33 @@ func (r VmPostgres) GetVm(vmId uuid.UUID) (domain.VirtualMachine, error) {
 	return vm, nil
 }
 
-func (r VmPostgres) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
-	vmId, err := uuid.NewUUID()
-	if err != nil {
-		return ErrInternal
-	}
+func (r VmPostgres) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) (uuid.UUID, error) {
+	var id uuid.UUID
+
+	vmId := uuid.New()
 	tx, err := r.db.Beginx()
+
 	if err != nil {
-		return ErrInternal
+		return uuid.Nil, ErrInternal
 	}
 	vmQuery := fmt.Sprintf(`INSERT INTO %s(id,title,description,status) 
-								VALUES($1,$2,$3,0)`, vmsTable)
-	_, err = tx.Exec(vmQuery, vmId, machine.Label, machine.Description)
-	if err != nil {
+								VALUES($1,$2,$3,0) RETURNING id`, vmsTable)
+	row := tx.QueryRowx(vmQuery, vmId, machine.Label, machine.Description)
+	if err = row.Scan(&id); err != nil {
 		tx.Rollback()
-		return ErrInternal
+		return uuid.Nil, ErrInternal
 	}
-	userVmId, err := uuid.NewUUID()
-	if err != nil {
-		tx.Rollback()
-		return ErrInternal
-	}
+
+	userVmId := uuid.New()
 	userVmQuery := fmt.Sprintf(`INSERT INTO %s(id,user_id, vm_id) 
 								VALUES($1,$2,$3)`, usersVmsTable)
 	_, err = tx.Exec(userVmQuery, userVmId, userId, vmId)
 	if err != nil {
 		tx.Rollback()
-		return ErrInternal
+		return uuid.Nil, ErrInternal
 	}
 
-	return tx.Commit()
+	return id, tx.Commit()
 }
 
 func (r VmPostgres) DeleteVm(vmId uuid.UUID) error {

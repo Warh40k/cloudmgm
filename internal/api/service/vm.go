@@ -26,7 +26,7 @@ func (s VmService) GetVm(vmId uuid.UUID) (domain.VirtualMachine, error) {
 	return s.repos.GetVm(vmId)
 }
 
-func (s VmService) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) error {
+func (s VmService) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) (uuid.UUID, error) {
 	return s.repos.CreateVm(userId, machine)
 }
 
