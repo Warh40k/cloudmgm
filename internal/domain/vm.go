@@ -12,4 +12,5 @@ type VirtualMachine struct {
 	Created     time.Time `json:"created" db:"created"`
 	Status      int       `json:"status" db:"status"`
 	Size        float64   `json:"size" db:"size"`
+	Datacenter
 }
