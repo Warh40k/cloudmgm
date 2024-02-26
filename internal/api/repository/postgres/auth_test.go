@@ -30,7 +30,7 @@ func TestAuthPostgres_SignUp(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "Ok",
+			name: "ValidCredentials",
 			mock: func() {
 				rows := sqlmock.NewRows([]string{"id"}).AddRow(id)
 				mock.ExpectQuery("INSERT INTO users").
@@ -45,7 +45,7 @@ func TestAuthPostgres_SignUp(t *testing.T) {
 			want: id,
 		},
 		{
-			name: "Empty Fields",
+			name: "EmptyPassword",
 			mock: func() {
 				rows := sqlmock.NewRows([]string{"id"})
 				mock.ExpectQuery(fmt.Sprintf("INSERT INTO %s", usersTable)).
