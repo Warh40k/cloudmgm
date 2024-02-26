@@ -7,7 +7,7 @@ import (
 
 type VirtualMachine struct {
 	Id          uuid.UUID `json:"id" db:"id"`
-	Label       string    `json:"title" db:"title" validate:"required"`
+	Label       string    `json:"label" db:"label" validate:"required"`
 	Description string    `json:"description" db:"description" validate:"required"`
 	Created     time.Time `json:"created" db:"created"`
 	Status      int       `json:"status" db:"status"`

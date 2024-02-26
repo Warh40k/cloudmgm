@@ -11,7 +11,6 @@ import (
 	"net/http"
 )
 
-// TODO Реализовать методы
 func (h *Handler) ListMachines(w http.ResponseWriter, r *http.Request) {
 	userId, ok := r.Context().Value("user").(uuid.UUID)
 	if !ok {

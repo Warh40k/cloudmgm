@@ -26,7 +26,7 @@ func NewVmPostgres(db *sqlx.DB) *VmPostgres {
 
 func (r VmPostgres) ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error) {
 	var vms []domain.VirtualMachine
-	query := fmt.Sprintf(`SELECT v.id,v.title,v.description,v.created FROM %s v 
+	query := fmt.Sprintf(`SELECT v.id,v.label,v.description,v.created FROM %s v 
          INNER JOIN %s uv 
          ON v.id = uv.vm_id 
          WHERE uv.user_id = $1`, vmsTable, usersVmsTable)
@@ -56,7 +56,7 @@ func (r VmPostgres) CreateVm(userId uuid.UUID, machine domain.VirtualMachine) (u
 	if err != nil {
 		return uuid.Nil, ErrInternal
 	}
-	vmQuery := fmt.Sprintf(`INSERT INTO %s(id,title,description,status) 
+	vmQuery := fmt.Sprintf(`INSERT INTO %s(id,label,description,status) 
 								VALUES($1,$2,$3,0) RETURNING id`, vmsTable)
 	row := tx.QueryRowx(vmQuery, vmId, machine.Label, machine.Description)
 	if err = row.Scan(&id); err != nil {
@@ -88,7 +88,7 @@ func (r VmPostgres) DeleteVm(vmId uuid.UUID) error {
 
 func (r VmPostgres) UpdateVm(machine domain.VirtualMachine) error {
 	query := fmt.Sprintf(`UPDATE %s 
-								SET title = $1, description = $2 
+								SET label = $1, description = $2 
 								WHERE id = $3`, vmsTable)
 	res, err := r.db.Exec(query, machine.Label, machine.Description, machine.Id)
 

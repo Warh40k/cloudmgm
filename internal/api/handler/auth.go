@@ -11,8 +11,8 @@ import (
 )
 
 type AuthRequest struct {
-	Login    string `json:"login" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Username string `json:"username" validate:"required,gte=1,lte=128"`
+	Password string `json:"password" validate:"required,gte=8,lte=128"`
 }
 
 type SignInResponse struct {
@@ -26,14 +26,12 @@ func (h *Handler) SignIn(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
 	err = json.Unmarshal(body, &auth)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-
-	token, err := h.services.SignIn(auth.Login, auth.Password)
+	token, err := h.services.SignIn(auth.Username, auth.Password)
 	if err != nil {
 		if errors.Is(err, service.ErrUnauthorized) {
 			w.WriteHeader(http.StatusUnauthorized)
