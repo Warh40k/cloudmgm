@@ -36,6 +36,7 @@ CREATE TABLE IF NOT EXISTS public.files
     volume_id uuid NOT NULL references volumes(id) on delete cascade ,
     name character varying NOT NULL,
     link character varying NOT NULL,
+    size int NOT NULL ,
     created timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 

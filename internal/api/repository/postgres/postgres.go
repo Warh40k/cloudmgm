@@ -10,6 +10,7 @@ const (
 	usersTable        = "users"
 	volumesTable      = "volumes"
 	usersVolumesTable = "users_volumes"
+	filesTable        = "files"
 )
 
 type Config struct {

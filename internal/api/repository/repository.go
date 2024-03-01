@@ -22,7 +22,7 @@ type Volume interface {
 }
 
 type File interface {
-	CreateFile(file domain.File) error
+	CreateFile(file domain.File) (uuid.UUID, error)
 	DeleteById(id uuid.UUID) error
 	GetById(id uuid.UUID) error
 	SearchFile(filename string) ([]domain.File, error)

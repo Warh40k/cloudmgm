@@ -10,9 +10,8 @@ type FileService struct {
 	repos repository.File
 }
 
-func (s FileService) CreateFile(file domain.File) error {
-	//TODO implement me
-	panic("implement me")
+func (s FileService) CreateFile(file domain.File) (uuid.UUID, error) {
+	return s.repos.CreateFile(file)
 }
 
 func (s FileService) DeleteById(id uuid.UUID) error {
