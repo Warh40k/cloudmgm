@@ -1,35 +1,56 @@
-CREATE TABLE users
+BEGIN;
+
+
+CREATE TABLE IF NOT EXISTS public.users
 (
     id uuid primary key,
-    name varchar(255) not null,
-    username varchar(255) not null unique,
-    password_hash varchar(255) not null,
-    balance double precision not null default 0,
-    created timestamp DEFAULT CURRENT_TIMESTAMP
+    name character varying(255) NOT NULL,
+    username character varying(255) NOT NULL,
+    password_hash character varying NOT NULL,
+    balance numeric NOT NULL DEFAULT 0,
+    created timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE datacenters
+CREATE TABLE IF NOT EXISTS public.storages
 (
-    id uuid primary key,
-    title varchar(255) not null,
-    geolocation varchar(255) not null,
-    total_size double precision not null default 0,
-    created timestamp DEFAULT CURRENT_TIMESTAMP
+    id uuid,
+    title character varying(255) NOT NULL,
+    geolocation character varying NOT NULL,
+    total_size bigint NOT NULL default 0,
+    created timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
 );
 
-CREATE TABLE vmachines
+CREATE TABLE IF NOT EXISTS public.volumes
 (
     id uuid primary key,
-    datacenter_id uuid references datacenters(id),
-    label varchar(255) not null,
-    description varchar(255),
-    size int,
-    created timestamp DEFAULT CURRENT_TIMESTAMP
+    storage_id uuid references public.storages(id) on delete cascade ,
+    label character varying(255) NOT NULL,
+    description character varying(1024),
+    size bigint NOT NULL DEFAULT 0
 );
 
-CREATE TABLE users_vmachines
+CREATE TABLE IF NOT EXISTS public.files
 (
-    id uuid primary key,
-    user_id uuid references users(id) on delete CASCADE,
-    vm_id uuid references vmachines(id) on delete CASCADE
+    id uuid primary key ,
+    volume_id uuid NOT NULL references volumes(id) on delete cascade ,
+    name character varying NOT NULL,
+    link character varying NOT NULL,
+    created timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE IF NOT EXISTS public.users_volumes
+(
+    id uuid primary key ,
+    user_id uuid NOT NULL references public.users(id) on delete  cascade,
+    volume_id uuid NOT NULL references public.volumes(id) on delete cascade
+);
+
+CREATE TABLE IF NOT EXISTS public.volumes_storages
+(
+    id uuid primary key ,
+    volume_id uuid NOT NULL references public.volumes(id) on delete cascade ,
+    storage_id uuid NOT NULL references public.storages(id) on delete cascade
+);
+
+END;
