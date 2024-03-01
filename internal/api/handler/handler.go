@@ -24,13 +24,22 @@ func (h *Handler) InitRoutes() *chi.Mux {
 	router.Route("/api/v1", func(r chi.Router) {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
-		r.Route("/machines", func(r chi.Router) {
+		r.Route("/volumes", func(r chi.Router) {
 			r.Use(genericMiddleware.CheckAuth)
-			r.Get("/", h.ListMachines)
-			r.Post("/", h.CreateMachine)
-			r.With(h.CheckOwnership).Get("/{machine_id}", h.GetMachine)
-			r.With(h.CheckOwnership).Put("/{machine_id}", h.UpdateMachine)
-			r.With(h.CheckOwnership).Delete("/{machine_id}", h.DeleteMachine)
+			r.Get("/", h.ListVolumes)
+			r.Post("/", h.CreateVolume)
+			r.Route("/{volume_id}", func(r chi.Router) {
+				r.With(h.CheckOwnership).Get("/", h.GetVolume)
+				r.With(h.CheckOwnership).Put("/", h.UpdateVolume)
+				r.With(h.CheckOwnership).Delete("/", h.DeleteVolume)
+				r.With(h.CheckOwnership).Post("/resize/", h.ResizeVolume)
+
+				r.Route("/files", func(r chi.Router) {
+					r.Post("/", h.UploadFile)
+					r.Get("/{file_id}", h.GetFile)
+					r.Delete("/{file_id}", h.DeleteFile)
+				})
+			})
 		})
 	})
 
