@@ -18,18 +18,9 @@ const IterCount = math.MaxInt16
 
 // UploadFile Create path directories and copy file to destination path
 func UploadFile(storagePath string, file multipart.File, dst *os.File) error {
-	_, err := os.Stat(storagePath)
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(storagePath, os.ModeDir|os.ModePerm)
-		if err != nil {
-			return err
-		}
-	}
-
-	if _, err = io.Copy(dst, file); err != nil {
+	if _, err := io.Copy(dst, file); err != nil {
 		return err
 	}
-
 	return nil
 }
 

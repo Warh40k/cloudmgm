@@ -29,10 +29,11 @@ func (h *Handler) InitRoutes() *chi.Mux {
 			r.Get("/", h.ListVolumes)
 			r.Post("/", h.CreateVolume)
 			r.Route("/{volume_id}", func(r chi.Router) {
-				r.With(h.CheckOwnership).Get("/", h.GetVolume)
-				r.With(h.CheckOwnership).Put("/", h.UpdateVolume)
-				r.With(h.CheckOwnership).Delete("/", h.DeleteVolume)
-				r.With(h.CheckOwnership).Post("/resize/", h.ResizeVolume)
+				r.Use(h.CheckOwnership)
+				r.Get("/", h.GetVolume)
+				r.Put("/", h.UpdateVolume)
+				r.Delete("/", h.DeleteVolume)
+				r.Post("/resize/", h.ResizeVolume)
 
 				r.Route("/files", func(r chi.Router) {
 					r.Post("/", h.UploadFile)
