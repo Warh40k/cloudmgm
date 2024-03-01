@@ -39,7 +39,7 @@ func TestAuthPostgres_SignUp(t *testing.T) {
 			input: domain.User{
 				Id:           id,
 				Name:         "Test",
-				Login:        "test",
+				Username:     "test",
 				PasswordHash: "$2a$10$7wyI.VRyw8GRxUBp9Gi3b.S7EH6u45HtKeG3GklSkSLtpoceXYAlO",
 			},
 			want: id,
@@ -54,7 +54,7 @@ func TestAuthPostgres_SignUp(t *testing.T) {
 			input: domain.User{
 				Id:       id,
 				Name:     "Test",
-				Login:    "test",
+				Username: "test",
 				Password: "",
 			},
 			wantErr: true,

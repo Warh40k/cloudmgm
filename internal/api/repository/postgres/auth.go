@@ -22,8 +22,8 @@ func NewAuthPostgres(db *sqlx.DB) *AuthPostgres {
 }
 
 func (r *AuthPostgres) SignUp(user domain.User) (uuid.UUID, error) {
-	query := fmt.Sprintf(`INSERT INTO %s(id,name,login,password_hash) VALUES($1,$2,$3,$4) RETURNING id`, usersTable)
-	row := r.db.QueryRowx(query, user.Id, user.Name, user.Login, user.PasswordHash)
+	query := fmt.Sprintf(`INSERT INTO %s(id,name,username,password_hash) VALUES($1,$2,$3,$4) RETURNING id`, usersTable)
+	row := r.db.QueryRowx(query, user.Id, user.Name, user.Username, user.PasswordHash)
 	var id uuid.UUID
 	if err := row.Scan(&id); err != nil {
 		var pgErr pgx.PgError
@@ -34,4 +34,19 @@ func (r *AuthPostgres) SignUp(user domain.User) (uuid.UUID, error) {
 		return uuid.Nil, ErrInternal
 	}
 	return id, nil
+}
+
+func (r *AuthPostgres) GetUserByUsername(username string) (domain.User, error) {
+	var user domain.User
+	query := fmt.Sprintf(`SELECT * FROM %s WHERE username=$1`, usersTable)
+	err := r.db.Get(&user, query, username)
+	if err != nil {
+		var pgErr pgx.PgError
+		if errors.As(err, &pgErr) {
+			return user, ErrInternal
+		} else {
+			return user, ErrNoRows
+		}
+	}
+	return user, nil
 }

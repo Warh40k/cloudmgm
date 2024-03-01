@@ -7,9 +7,9 @@ import (
 )
 
 const (
-	usersTable    = "users"
-	vmsTable      = "vmachines"
-	usersVmsTable = "users_vmachines"
+	usersTable        = "users"
+	volumesTable      = "volumes"
+	usersVolumesTable = "users_volumes"
 )
 
 type Config struct {

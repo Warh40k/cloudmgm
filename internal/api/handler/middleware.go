@@ -14,7 +14,7 @@ func (h *Handler) CheckOwnership(next http.Handler) http.Handler {
 			return
 		}
 
-		vmId, err := uuid.Parse(chi.URLParam(r, "machine_id"))
+		vmId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			return

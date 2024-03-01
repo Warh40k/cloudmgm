@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-type Datacenter struct {
+type Storage struct {
 	Id          uuid.UUID
 	Title       string
 	Geolocation string

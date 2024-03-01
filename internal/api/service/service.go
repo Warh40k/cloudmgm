@@ -3,12 +3,16 @@ package service
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
+)
+
+import (
 	"github.com/google/uuid"
 )
 
 type Service struct {
 	Authorization
-	Vm
+	Volume
+	File
 }
 
 type Authorization interface {
@@ -16,18 +20,27 @@ type Authorization interface {
 	SignIn(username, password string) (string, error)
 }
 
-type Vm interface {
-	ListVm(userId uuid.UUID) ([]domain.VirtualMachine, error)
-	GetVm(vmId uuid.UUID) (domain.VirtualMachine, error)
-	CreateVm(userId uuid.UUID, machine domain.VirtualMachine) (uuid.UUID, error)
-	DeleteVm(vmId uuid.UUID) error
-	UpdateVm(machine domain.VirtualMachine) error
+type Volume interface {
+	ListVolume(userId uuid.UUID) ([]domain.Volume, error)
+	GetVolume(vmId uuid.UUID) (domain.Volume, error)
+	CreateVolume(userId uuid.UUID, machine domain.Volume) (uuid.UUID, error)
+	DeleteVolume(vmId uuid.UUID) error
+	UpdateVolume(machine domain.Volume) error
 	CheckOwnership(userId, vmId uuid.UUID) error
+	ResizeVolume(userId uuid.UUID, amount int) error
+}
+
+type File interface {
+	CreateFile(file domain.File) error
+	DeleteById(id uuid.UUID) error
+	GetById(id uuid.UUID) error
+	SearchFile(filename string) ([]File, error)
 }
 
 func NewService(repos *repository.Repository) *Service {
 	return &Service{
 		Authorization: NewAuthService(repos.Authorization),
-		Vm:            NewVmService(repos.Vm),
+		Volume:        NewVolumeService(repos.Volume),
+		File:          NewFileService(repos.File),
 	}
 }

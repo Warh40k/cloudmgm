@@ -1,10 +1,8 @@
 package service
 
 import (
-	"errors"
 	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
-	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/api/service/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
@@ -32,24 +30,16 @@ func (s *AuthService) SignUp(user domain.User) error {
 
 	_, err = s.repos.SignUp(user)
 	if err != nil {
-		if errors.Is(err, postgres.ErrUnique) {
-			return ErrBadRequest
-		} else {
-			return ErrInternal
-		}
+		return err
 	}
 
 	return nil
 }
 
-func (s *AuthService) SignIn(login, password string) (string, error) {
-	user, err := s.repos.GetUserByLogin(login)
+func (s *AuthService) SignIn(username, password string) (string, error) {
+	user, err := s.repos.GetUserByUsername(username)
 	if err != nil {
-		if errors.Is(err, postgres.ErrNoRows) {
-			return "", ErrNotFound
-		} else {
-			return "", ErrInternal
-		}
+		return "", err
 	}
 	hash := user.PasswordHash
 	if utils.CheckPassword(password, hash) {
