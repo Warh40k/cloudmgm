@@ -3,6 +3,8 @@ version: '3.8'
 volumes:
   pgdata:
     driver: local
+  pgadmin:
+    driver: local
 
 services:
   db:
@@ -27,15 +29,30 @@ services:
 #      - db
 #    links:
 #      - db
-  app:
-    container_name: cloudmgm-server
-    restart: on-failure
-    depends_on:
-      - db
-    image: ewallet:latest
-    ports:
-      - "8080:8080"
+#  app:
+#    container_name: cloudmgm-server
+#    restart: on-failure
+#    depends_on:
+#      - db
+#    image: ewallet:latest
+#    ports:
+#      - "8080:8080"
+#    volumes:
+#      - ./configs:/server/configs
+#    env_file:
+#      - .env
+  pgadmin:
+    container_name: cloudmgm-pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-nikita@mail.ru}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-projector}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
     volumes:
-      - ./configs:/server/configs
-    env_file:
-      - .env
+      - pgadmin:/var/lib/pgadmin
+      - ./schema/ers:/ers
+
+    ports:
+      - "${PGADMIN_PORT:-5051}:80"
+    restart: unless-stopped
+
