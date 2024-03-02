@@ -14,7 +14,7 @@ import (
 func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	volumeId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
 	err = r.ParseMultipartForm(1 << 20)
 	if err != nil {
@@ -75,7 +75,7 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 	fileId, err := uuid.Parse(chi.URLParam(r, "file_id"))
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -95,4 +95,26 @@ func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 	panic("not implemented")
+}
+
+func (h *Handler) ListVolumeFiles(w http.ResponseWriter, r *http.Request) {
+	volumeId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	files, err := h.services.ListVolumeFiles(volumeId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	resp, err := json.Marshal(files)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(resp)
 }

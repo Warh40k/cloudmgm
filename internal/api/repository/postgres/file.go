@@ -11,6 +11,16 @@ type FilePostgres struct {
 	db *sqlx.DB
 }
 
+func (r FilePostgres) ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error) {
+	query := fmt.Sprintf(`SELECT * FROM %s where volume_id = $1`, filesTable)
+	var files []domain.File
+	err := r.db.Select(&files, query, volumeId)
+	if err != nil {
+		return nil, ErrInternal
+	}
+	return files, nil
+}
+
 func (r FilePostgres) CreateFile(file domain.File) (uuid.UUID, error) {
 	file.Id = uuid.New()
 

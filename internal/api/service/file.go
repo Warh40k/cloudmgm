@@ -10,6 +10,10 @@ type FileService struct {
 	repos repository.File
 }
 
+func (s FileService) ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error) {
+	return s.repos.ListVolumeFiles(volumeId)
+}
+
 func (s FileService) CreateFile(file domain.File) (uuid.UUID, error) {
 	return s.repos.CreateFile(file)
 }
@@ -24,8 +28,7 @@ func (s FileService) GetFile(id uuid.UUID) (domain.File, error) {
 }
 
 func (s FileService) SearchFile(filename string) ([]File, error) {
-	//TODO implement me
-	panic("implement me")
+	panic("not implemented")
 }
 
 func NewFileService(repos repository.File) *FileService {

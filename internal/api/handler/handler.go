@@ -37,6 +37,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 
 				r.Route("/files", func(r chi.Router) {
 					r.Post("/", h.UploadFile)
+					r.Get("/", h.ListVolumeFiles)
 					r.Get("/{file_id}", h.GetFile)
 					r.Delete("/{file_id}", h.DeleteFile)
 				})

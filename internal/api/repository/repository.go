@@ -26,6 +26,7 @@ type File interface {
 	DeleteFile(id uuid.UUID) error
 	GetFile(id uuid.UUID) (domain.File, error)
 	SearchFile(filename string) ([]domain.File, error)
+	ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error)
 }
 
 type Repository struct {

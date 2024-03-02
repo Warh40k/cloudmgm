@@ -10,13 +10,13 @@ func (h *Handler) CheckOwnership(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		userId, ok := r.Context().Value("user").(uuid.UUID)
 		if !ok {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, "no user info", http.StatusForbidden)
 			return
 		}
 
 		vmId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 
