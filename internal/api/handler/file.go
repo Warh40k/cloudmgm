@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"github.com/Warh40k/cloud-manager/internal/api/handler/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
@@ -71,8 +72,25 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *Handler) GetFileInfo(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
+func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
+	fileId, err := uuid.Parse(chi.URLParam(r, "file_id"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	file, err := h.services.GetFile(fileId)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusNotFound)
+		return
+	}
+
+	resp, err := json.Marshal(file)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Write(resp)
 }
 
 func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {

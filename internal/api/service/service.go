@@ -32,8 +32,8 @@ type Volume interface {
 
 type File interface {
 	CreateFile(file domain.File) (uuid.UUID, error)
-	DeleteById(id uuid.UUID) error
-	GetById(id uuid.UUID) error
+	DeleteFile(id uuid.UUID) error
+	GetFile(id uuid.UUID) (domain.File, error)
 	SearchFile(filename string) ([]File, error)
 }
 

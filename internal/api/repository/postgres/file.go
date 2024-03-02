@@ -20,18 +20,22 @@ func (r FilePostgres) CreateFile(file domain.File) (uuid.UUID, error) {
 	if err != nil {
 		return uuid.Nil, ErrInternal
 	}
-
 	return file.Id, nil
 }
 
-func (r FilePostgres) DeleteById(id uuid.UUID) error {
+func (r FilePostgres) DeleteFile(id uuid.UUID) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (r FilePostgres) GetById(id uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+func (r FilePostgres) GetFile(fileId uuid.UUID) (domain.File, error) {
+	var file domain.File
+	query := fmt.Sprintf(`SELECT * FROM %s where id = $1`, filesTable)
+	err := r.db.Get(&file, query, fileId)
+	if err != nil {
+		return file, ErrNoRows
+	}
+	return file, nil
 }
 
 func (r FilePostgres) SearchFile(filename string) ([]domain.File, error) {

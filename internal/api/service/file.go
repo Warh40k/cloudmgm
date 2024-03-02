@@ -14,14 +14,13 @@ func (s FileService) CreateFile(file domain.File) (uuid.UUID, error) {
 	return s.repos.CreateFile(file)
 }
 
-func (s FileService) DeleteById(id uuid.UUID) error {
+func (s FileService) DeleteFile(id uuid.UUID) error {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (s FileService) GetById(id uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+func (s FileService) GetFile(id uuid.UUID) (domain.File, error) {
+	return s.repos.GetFile(id)
 }
 
 func (s FileService) SearchFile(filename string) ([]File, error) {
