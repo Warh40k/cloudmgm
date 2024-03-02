@@ -69,7 +69,17 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
+	fileId, err := uuid.Parse(chi.URLParam(r, "file_id"))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
 
+	err = h.services.DeleteFile(fileId)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
 }
 
 func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {

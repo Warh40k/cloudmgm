@@ -33,9 +33,14 @@ func (r FilePostgres) CreateFile(file domain.File) (uuid.UUID, error) {
 	return file.Id, nil
 }
 
-func (r FilePostgres) DeleteFile(id uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+func (r FilePostgres) DeleteFile(fileId uuid.UUID) error {
+	query := fmt.Sprintf(`DELETE FROM %s v WHERE v.id = $1`, filesTable)
+	_, err := r.db.Exec(query, fileId)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (r FilePostgres) GetFile(fileId uuid.UUID) (domain.File, error) {

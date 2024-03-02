@@ -19,8 +19,7 @@ func (s FileService) CreateFile(file domain.File) (uuid.UUID, error) {
 }
 
 func (s FileService) DeleteFile(id uuid.UUID) error {
-	//TODO implement me
-	panic("implement me")
+	return s.repos.DeleteFile(id)
 }
 
 func (s FileService) GetFile(id uuid.UUID) (domain.File, error) {
