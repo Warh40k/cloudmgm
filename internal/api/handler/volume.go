@@ -9,19 +9,33 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
+	"log/slog"
 	"net/http"
 )
 
 func (h *Handler) ListVolumes(w http.ResponseWriter, r *http.Request) {
+	const op = "Volume.Handler.ListVolumes"
+	log := h.log.With(
+		slog.String("op", op),
+	)
+
 	userId, ok := r.Context().Value("user").(uuid.UUID)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.Error("failed to delete file")
+		http.Error(w, "wrong user id", http.StatusBadRequest)
 		return
 	}
 
 	vms, err := h.services.ListVolume(userId)
 	if err != nil {
+		log.With(
+			slog.String("err", err.Error()),
+			slog.String("user id", userId.String()),
+		).Error("failed to delete file")
+
 		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
+
 		return
 	}
 	if vms == nil {
@@ -30,7 +44,7 @@ func (h *Handler) ListVolumes(w http.ResponseWriter, r *http.Request) {
 
 	responseText, err := json.Marshal(vms)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -40,19 +54,20 @@ func (h *Handler) ListVolumes(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) GetVolume(w http.ResponseWriter, r *http.Request) {
 	vmId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	vm, err := h.services.GetVolume(vmId)
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	resp, err := json.Marshal(vm)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -60,9 +75,14 @@ func (h *Handler) GetVolume(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) CreateVolume(w http.ResponseWriter, r *http.Request) {
+	log := h.log.With(
+		slog.String("op", "Middleware.CheckOwnership"),
+	)
 	userId, ok := r.Context().Value("user").(uuid.UUID)
 	if !ok {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.With(slog.String("err", "failed to parse user id")).Error("failed to delete file")
+
+		http.Error(w, "wrong user id", http.StatusBadRequest)
 		return
 	}
 
@@ -70,7 +90,8 @@ func (h *Handler) CreateVolume(w http.ResponseWriter, r *http.Request) {
 
 	err := json.NewDecoder(r.Body).Decode(&vm)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.With(slog.String("err", err.Error())).Error("failed to delete file")
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -79,25 +100,34 @@ func (h *Handler) CreateVolume(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		var errs validator.ValidationErrors
 		errors.As(err, &errs)
+		log.With(slog.String("err", errs.Error())).Error("failed to validate input volume")
 		http.Error(w, fmt.Sprintf("Validation error: %s", errs), http.StatusBadRequest)
+		return
 	}
 	_, err = h.services.CreateVolume(userId, vm)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.With(slog.String("err", err.Error())).Error("failed to create volume")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 }
 
 func (h *Handler) DeleteVolume(w http.ResponseWriter, r *http.Request) {
+	const op = "Volume.Handler.DeleteVolume"
+	log := h.log.With(
+		slog.String("op", op),
+	)
+
 	vmId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to get volume id")
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	err = h.services.DeleteVolume(vmId)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to delete volume")
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}

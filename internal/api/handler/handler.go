@@ -5,14 +5,16 @@ import (
 	genericMiddleware "github.com/Warh40k/cloud-manager/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"log/slog"
 )
 
 type Handler struct {
 	services *service.Service
+	log      *slog.Logger
 }
 
-func NewHandler(services *service.Service) *Handler {
-	return &Handler{services: services}
+func NewHandler(services *service.Service, log *slog.Logger) *Handler {
+	return &Handler{services: services, log: log}
 }
 
 func (h *Handler) InitRoutes() *chi.Mux {

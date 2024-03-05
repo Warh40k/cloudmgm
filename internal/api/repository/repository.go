@@ -5,6 +5,7 @@ import (
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"log/slog"
 )
 
 type Authorization interface {
@@ -35,7 +36,7 @@ type Repository struct {
 	File
 }
 
-func NewRepository(db *sqlx.DB) *Repository {
+func NewRepository(db *sqlx.DB, log *slog.Logger) *Repository {
 	return &Repository{
 		Authorization: postgres.NewAuthPostgres(db),
 		Volume:        postgres.NewVolumePostgres(db),

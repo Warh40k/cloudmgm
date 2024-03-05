@@ -1,15 +1,27 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"github.com/Warh40k/cloud-manager/internal/api/handler"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
-	"github.com/Warh40k/cloud-manager/internal/server"
+	"github.com/Warh40k/cloud-manager/internal/app"
 	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/viper"
+	"log/slog"
+	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+)
+
+const (
+	envLocal = "local"
+	envDev   = "dev"
+	envProd  = "prod"
 )
 
 func initConfig() error {
@@ -18,8 +30,28 @@ func initConfig() error {
 	return viper.ReadInConfig()
 }
 
+func setupLogger(env string) *slog.Logger {
+	var log *slog.Logger
+
+	switch env {
+	case envLocal:
+		log = slog.New(
+			slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+		)
+	case envDev:
+		log = slog.New(
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+		)
+	case envProd:
+		log = slog.New(
+			slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelInfo}),
+		)
+	}
+
+	return log
+}
+
 func main() {
-	logrus.SetFormatter(new(logrus.JSONFormatter))
 	if err := initConfig(); err != nil {
 		logrus.Fatalf("Ошибка чтения конфигурации: %s", err.Error())
 	}
@@ -27,6 +59,8 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		logrus.Fatalf("Ошибка чтения переменных окружения: %s", err.Error())
 	}
+
+	log := setupLogger(viper.GetString("env"))
 
 	config := postgres.Config{
 		Host:     viper.GetString("db.host"),
@@ -42,11 +76,29 @@ func main() {
 		logrus.Fatalf("Ошибка подключения к базе данных: %s", err.Error())
 	}
 
-	repos := repository.NewRepository(db)
-	services := service.NewService(repos)
-	handlers := handler.NewHandler(services)
-	serv := new(server.Server)
-	if err = serv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil {
-		logrus.Fatalf("Ошибка запуска http сервера: %s", err.Error())
+	repos := repository.NewRepository(db, log)
+	services := service.NewService(repos, log)
+	handlers := handler.NewHandler(services, log)
+	serv := new(app.App)
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGTERM, syscall.SIGINT)
+	go func() {
+		if err = serv.Run(viper.GetString("port"), handlers.InitRoutes()); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			logrus.Fatalf("Ошибка запуска http сервера: %s", err.Error())
+		}
+	}()
+	log.Info("server started")
+	<-quit
+
+	log.Info("trying to gracefull shutdown")
+	if err = serv.Shutdown(context.Background()); err != nil {
+		log.With(slog.String("err", err.Error())).Error("error occured on server shutting down:")
 	}
+
+	if err = db.Close(); err != nil {
+		logrus.Errorf("error occured on db connection close: %s", err.Error())
+	}
+
+	log.Info("gracefully stopped")
 }

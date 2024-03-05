@@ -30,7 +30,7 @@ services:
 #    links:
 #      - db
 #  app:
-#    container_name: cloudmgm-server
+#    container_name: cloudmgm-app
 #    restart: on-failure
 #    depends_on:
 #      - db
@@ -38,7 +38,7 @@ services:
 #    ports:
 #      - "8080:8080"
 #    volumes:
-#      - ./configs:/server/configs
+#      - ./configs:/app/configs
 #    env_file:
 #      - .env
   pgadmin:

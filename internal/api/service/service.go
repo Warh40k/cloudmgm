@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
+	"log/slog"
 )
 
 import (
@@ -38,7 +39,7 @@ type File interface {
 	SearchFile(filename string) ([]File, error)
 }
 
-func NewService(repos *repository.Repository) *Service {
+func NewService(repos *repository.Repository, log *slog.Logger) *Service {
 	return &Service{
 		Authorization: NewAuthService(repos.Authorization),
 		Volume:        NewVolumeService(repos.Volume),

@@ -7,24 +7,36 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/spf13/viper"
+	"log/slog"
 	"net/http"
 	"os"
 )
 
 func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	volumeId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
+	const op = "File.ListVolumeFiles"
+	volumeIdParam := chi.URLParam(r, "volume_id")
+
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("file id", volumeIdParam),
+	)
+
+	volumeId, err := uuid.Parse(volumeIdParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 	}
+
 	err = r.ParseMultipartForm(1 << 20)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		log.With(slog.String("err", err.Error())).Error("failed to parse multipart form")
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+
 	file, handler, err := r.FormFile("uploaded_file")
 	defer file.Close()
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
@@ -34,6 +46,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
 	_, err = os.Stat(dirPath)
 	if os.IsNotExist(err) {
 		err = os.MkdirAll(dirPath, os.ModeDir|os.ModePerm)
@@ -42,6 +55,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+
 	dst, err := os.Create(dirPath + "/" + fileName)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -69,34 +83,53 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
-	fileId, err := uuid.Parse(chi.URLParam(r, "file_id"))
+	const op = "File.Handler.DeleteFile"
+	fileIdParam := chi.URLParam(r, "file_id")
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("file id", fileIdParam),
+	)
+	fileId, err := uuid.Parse(fileIdParam)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		log.With(slog.String("err", err.Error())).Error("failed to parse uuid")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	err = h.services.DeleteFile(fileId)
 	if err != nil {
-		w.WriteHeader(http.StatusNotFound)
+		log.With(slog.String("err", err.Error())).Error("failed to delete file")
+		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 }
 
 func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
-	fileId, err := uuid.Parse(chi.URLParam(r, "file_id"))
+	const op = "File.Handler.GetFile"
+	fileIdParam := chi.URLParam(r, "file_id")
+
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("file id", fileIdParam),
+	)
+
+	fileId, err := uuid.Parse(fileIdParam)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to parse uuid")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	file, err := h.services.GetFile(fileId)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to get file")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
 
 	resp, err := json.Marshal(file)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to marshall json")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -108,20 +141,31 @@ func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) ListVolumeFiles(w http.ResponseWriter, r *http.Request) {
-	volumeId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
+	const op = "File.Handler.ListVolumeFiles"
+	volumeIdParam := chi.URLParam(r, "volume_id")
+
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("volume id", volumeIdParam),
+	)
+
+	volumeId, err := uuid.Parse(volumeIdParam)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to marshall json")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	files, err := h.services.ListVolumeFiles(volumeId)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to list volumes")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
 	resp, err := json.Marshal(files)
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to list volumes")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
