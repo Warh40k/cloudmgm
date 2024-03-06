@@ -6,6 +6,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"log/slog"
+	"mime"
 	"net/http"
 )
 
@@ -83,7 +84,7 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 
 }
 
-func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) GetFileInfo(w http.ResponseWriter, r *http.Request) {
 	const op = "File.Handler.GetFileInfo"
 	fileIdParam := chi.URLParam(r, "file_id")
 
@@ -116,9 +117,7 @@ func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
-	panic("not implemented")
-
-	/*const op = "File.Handler.GetFileInfo"
+	const op = "File.Handler.DownloadFile"
 	fileIdParam := chi.URLParam(r, "file_id")
 
 	log := h.log.With(
@@ -131,7 +130,29 @@ func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 		log.With(slog.String("err", err.Error())).Error("failed to parse uuid")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
-	}*/
+	}
+
+	/*file, err := h.services.GetFileInfo(fileId)
+	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to get file")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close()*/
+
+	fileInfo, err := h.services.GetFileInfo(fileId)
+	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to get file")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	attHeader := mime.FormatMediaType("attachment", map[string]string{"filename": fileInfo.Name})
+	r.Header.Set("Content-Disposition", attHeader)
+	r.Header.Set("Content-Type", "application/octet-stream")
+
+	path := fileInfo.GetPath()
+	http.ServeFile(w, r, path)
 }
 
 func (h *Handler) ListVolumeFiles(w http.ResponseWriter, r *http.Request) {

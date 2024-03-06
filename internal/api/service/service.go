@@ -39,6 +39,7 @@ type File interface {
 	ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error)
 	SearchFile(filename string) ([]File, error)
 	UploadFile(volumeId uuid.UUID, file *multipart.File, header *multipart.FileHeader) (string, error)
+	//GetFileInfo(fileId uuid.UUID) (multipart.File, error)
 }
 
 func NewService(repos *repository.Repository, log *slog.Logger) *Service {

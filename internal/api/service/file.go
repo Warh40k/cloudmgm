@@ -76,7 +76,7 @@ func (s FileService) DeleteFile(fileId uuid.UUID) error {
 		return fmt.Errorf("error getting file info: %w", err)
 	}
 
-	path := viper.GetString("files.save_path") + "/" + fileInfo.VolumeId.String() + "/" + fileInfo.Name
+	path := fileInfo.GetPath()
 	_, err = os.Stat(path)
 	if os.IsNotExist(err) {
 		return fmt.Errorf("specified file not found: %w", err)
