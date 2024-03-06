@@ -15,14 +15,14 @@ func CheckAuth(next http.Handler) http.Handler {
 		if len(headSplit) == 2 {
 			token = headSplit[1]
 		} else {
-			w.WriteHeader(http.StatusForbidden)
+			http.Error(w, "Forbidden", http.StatusForbidden)
 			return
 		}
 
 		id, err := utils.CheckJWT(token)
 
 		if err != nil {
-			w.WriteHeader(http.StatusForbidden)
+			http.Error(w, err.Error(), http.StatusForbidden)
 			return
 		}
 
