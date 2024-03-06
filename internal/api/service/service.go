@@ -4,6 +4,7 @@ import (
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"log/slog"
+	"mime/multipart"
 )
 
 import (
@@ -33,10 +34,11 @@ type Volume interface {
 
 type File interface {
 	CreateFile(file domain.File) (uuid.UUID, error)
-	DeleteFile(id uuid.UUID) error
-	GetFile(id uuid.UUID) (domain.File, error)
+	DeleteFile(fileId uuid.UUID) error
+	GetFileInfo(id uuid.UUID) (domain.File, error)
 	ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error)
 	SearchFile(filename string) ([]File, error)
+	UploadFile(volumeId uuid.UUID, file *multipart.File, header *multipart.FileHeader) (string, error)
 }
 
 func NewService(repos *repository.Repository, log *slog.Logger) *Service {

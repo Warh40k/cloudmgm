@@ -2,18 +2,15 @@ package handler
 
 import (
 	"encoding/json"
-	"github.com/Warh40k/cloud-manager/internal/api/handler/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
 	"log/slog"
 	"net/http"
-	"os"
 )
 
 func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
-	const op = "File.ListVolumeFiles"
+	const op = "File.UploadFile"
 	volumeIdParam := chi.URLParam(r, "volume_id")
 
 	log := h.log.With(
@@ -33,45 +30,26 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, handler, err := r.FormFile("uploaded_file")
+	file, header, err := r.FormFile("uploaded_file")
 	defer file.Close()
 	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to upload file")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	dirPath := viper.GetString("files.save_path") + "/" + volumeId.String()
-	fileName, err := utils.GetFileName(dirPath, handler.Filename)
+	fileName, err := h.services.UploadFile(volumeId, &file, header)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		log.With(slog.String("err", err.Error())).Error("failed to save file")
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	_, err = os.Stat(dirPath)
-	if os.IsNotExist(err) {
-		err = os.MkdirAll(dirPath, os.ModeDir|os.ModePerm)
-		if err != nil {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-			return
-		}
-	}
-
-	dst, err := os.Create(dirPath + "/" + fileName)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-	defer dst.Close()
-
-	err = utils.UploadFile(dirPath, file, dst)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-	}
-
+	// save file info in db
 	var fileEntity = domain.File{
 		VolumeId: volumeId,
 		Name:     fileName,
-		Size:     handler.Size,
+		Size:     header.Size,
 		Link:     "",
 	}
 
@@ -83,7 +61,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
-	const op = "File.Handler.DeleteFile"
+	const op = "File.Handler.DeleteFileInfo"
 	fileIdParam := chi.URLParam(r, "file_id")
 	log := h.log.With(
 		slog.String("op", op),
@@ -98,14 +76,15 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 
 	err = h.services.DeleteFile(fileId)
 	if err != nil {
-		log.With(slog.String("err", err.Error())).Error("failed to delete file")
+		log.With(slog.String("err", err.Error())).Error("failed to delete file info")
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
+
 }
 
 func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
-	const op = "File.Handler.GetFile"
+	const op = "File.Handler.GetFileInfo"
 	fileIdParam := chi.URLParam(r, "file_id")
 
 	log := h.log.With(
@@ -120,7 +99,7 @@ func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	file, err := h.services.GetFile(fileId)
+	file, err := h.services.GetFileInfo(fileId)
 	if err != nil {
 		log.With(slog.String("err", err.Error())).Error("failed to get file")
 		http.Error(w, err.Error(), http.StatusNotFound)
@@ -138,6 +117,21 @@ func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 
 func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 	panic("not implemented")
+
+	/*const op = "File.Handler.GetFileInfo"
+	fileIdParam := chi.URLParam(r, "file_id")
+
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("file id", fileIdParam),
+	)
+
+	fileId, err := uuid.Parse(fileIdParam)
+	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to parse uuid")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}*/
 }
 
 func (h *Handler) ListVolumeFiles(w http.ResponseWriter, r *http.Request) {
