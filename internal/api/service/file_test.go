@@ -18,7 +18,7 @@ import (
 func LoadConfig(t *testing.T) {
 	pathToRoot := "../../../"
 	viper.AddConfigPath(pathToRoot + "configs")
-	viper.SetConfigName("local")
+	viper.SetConfigName("local") // fix
 	err := viper.ReadInConfig()
 	require.NoError(t, err)
 }
@@ -41,22 +41,22 @@ func TestFileService_UploadFile(t *testing.T) {
 	fs := afero.NewMemMapFs()
 
 	testTable := []struct {
-		Label         string
-		NumIters      int
-		Path          string
-		VolumeId      string
-		FileName      string
-		FileExtension string
-		ExpectError   bool
+		Label          string
+		NumIters       int
+		Path           string
+		VolumeId       string
+		FileName       string
+		FileExtension  string
+		ExpectNotExist bool
+		ExpectError    bool
 	}{
 		{
 			Label:         "HappyPath",
 			NumIters:      1,
 			Path:          viper.GetString("files.save_path"),
 			VolumeId:      gofakeit.UUID(),
-			FileName:      gofakeit.Sentence(5),
-			FileExtension: gofakeit.Extension(),
-			ExpectError:   false,
+			FileName:      gofakeit.Word(),
+			FileExtension: "." + gofakeit.Extension(),
 		},
 		{
 			Label:       "EmptyPath",
@@ -65,6 +65,23 @@ func TestFileService_UploadFile(t *testing.T) {
 			VolumeId:    "",
 			FileName:    "",
 			ExpectError: true,
+		},
+		{
+			Label:         "Several iterations",
+			NumIters:      5,
+			Path:          viper.GetString("files.save_path"),
+			VolumeId:      gofakeit.UUID(),
+			FileName:      gofakeit.Word(),
+			FileExtension: "." + gofakeit.Extension(),
+		},
+		{
+			Label:         "Iterations overflow",
+			NumIters:      IterCount,
+			Path:          viper.GetString("files.save_path"),
+			VolumeId:      gofakeit.UUID(),
+			FileName:      gofakeit.Word(),
+			FileExtension: "." + gofakeit.Extension(),
+			ExpectError:   true,
 		},
 	}
 
@@ -76,22 +93,29 @@ func TestFileService_UploadFile(t *testing.T) {
 
 			volumePath := tbl.Path + "/" + tbl.VolumeId
 			var saveName string
-			for j := 0; j < tbl.NumIters; j++ {
+			var j int
+			for j = 0; j < tbl.NumIters-1; j++ {
 				saveName, err = service.UploadFile(volumePath, file, filename, fs)
-				if tbl.ExpectError {
-					require.Error(t, err)
-					return
-				}
-				namePostfix := ""
-				if j != 0 {
-					namePostfix = "(" + strconv.Itoa(j) + ")"
-				}
-				expectedName := tbl.FileName + namePostfix + tbl.FileExtension
-				ok, err := afero.Exists(fs, volumePath+"/"+saveName)
-				assert.NoError(t, err)
-				assert.Equal(t, expectedName, saveName)
-				assert.True(t, ok)
+				require.NoError(t, err)
 			}
+			saveName, err = service.UploadFile(volumePath, file, filename, fs)
+			if tbl.ExpectError {
+				require.Error(t, err)
+				return
+			}
+			namePostfix := ""
+			if j != 0 {
+				namePostfix = "(" + strconv.Itoa(j) + ")"
+			}
+			expectedName := tbl.FileName + namePostfix + tbl.FileExtension
+			ok, err := afero.Exists(fs, volumePath+"/"+saveName)
+			if tbl.ExpectNotExist {
+				require.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, expectedName, saveName)
+			assert.True(t, ok)
 		})
 	}
 
