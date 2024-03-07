@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS public.users
 (
     id uuid primary key,
     name character varying(255) NOT NULL,
-    username character varying(255) NOT NULL,
+    username character varying(255) NOT NULL UNIQUE ,
     password_hash character varying NOT NULL,
     balance numeric NOT NULL DEFAULT 0,
     created timestamp without time zone NOT NULL DEFAULT CURRENT_TIMESTAMP
