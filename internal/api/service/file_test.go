@@ -4,7 +4,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/brianvoe/gofakeit"
-	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/afero"
 	"github.com/spf13/viper"
@@ -12,41 +11,88 @@ import (
 	"github.com/stretchr/testify/require"
 	"log/slog"
 	"os"
+	"strconv"
 	"testing"
 )
 
-func TestFileService_UploadFile_HappyPath(t *testing.T) {
-	/**
-	Создать таблицу кейсов
-	TODO
-	*/
-
-	//load config
+func LoadConfig(t *testing.T) {
 	pathToRoot := "../../../"
 	viper.AddConfigPath(pathToRoot + "configs")
 	viper.SetConfigName("local")
 	err := viper.ReadInConfig()
 	require.NoError(t, err)
+}
 
-	volumeId := uuid.New()
-	fileName := gofakeit.Sentence(5) + gofakeit.Extension()
-	fs := afero.NewMemMapFs()
-	file, err := fs.Create(fileName)
-	require.NoError(t, err)
-	volumePath := viper.GetString("files.save_path") + "/" + volumeId.String()
-
-	//init layers
+func InitLayers(t *testing.T) *Service {
 	db, _, err := sqlmock.New()
+	require.NoError(t, err)
 	dbx := sqlx.NewDb(db, "sqlmock")
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	repo := repository.NewRepository(dbx, log)
 	service := NewService(repo, log)
 
-	// run upload
-	saveName, err := service.UploadFile(volumePath, file, fileName, fs)
-	assert.Equal(t, fileName, saveName)
+	return service
+}
 
-	ok, err := afero.Exists(fs, viper.GetString("files.save_path")+
-		"/"+volumeId.String()+"/"+fileName)
-	assert.True(t, ok)
+func TestFileService_UploadFile(t *testing.T) {
+	LoadConfig(t)
+	service := InitLayers(t)
+
+	fs := afero.NewMemMapFs()
+
+	testTable := []struct {
+		Label         string
+		NumIters      int
+		Path          string
+		VolumeId      string
+		FileName      string
+		FileExtension string
+		ExpectError   bool
+	}{
+		{
+			Label:         "HappyPath",
+			NumIters:      1,
+			Path:          viper.GetString("files.save_path"),
+			VolumeId:      gofakeit.UUID(),
+			FileName:      gofakeit.Sentence(5),
+			FileExtension: gofakeit.Extension(),
+			ExpectError:   false,
+		},
+		{
+			Label:       "EmptyPath",
+			NumIters:    1,
+			Path:        "",
+			VolumeId:    "",
+			FileName:    "",
+			ExpectError: true,
+		},
+	}
+
+	for _, tbl := range testTable {
+		t.Run(tbl.Label, func(t *testing.T) {
+			filename := tbl.FileName + tbl.FileExtension
+			file, err := fs.Create(filename)
+			require.NoError(t, err)
+
+			volumePath := tbl.Path + "/" + tbl.VolumeId
+			var saveName string
+			for j := 0; j < tbl.NumIters; j++ {
+				saveName, err = service.UploadFile(volumePath, file, filename, fs)
+				if tbl.ExpectError {
+					require.Error(t, err)
+					return
+				}
+				namePostfix := ""
+				if j != 0 {
+					namePostfix = "(" + strconv.Itoa(j) + ")"
+				}
+				expectedName := tbl.FileName + namePostfix + tbl.FileExtension
+				ok, err := afero.Exists(fs, volumePath+"/"+saveName)
+				assert.NoError(t, err)
+				assert.Equal(t, expectedName, saveName)
+				assert.True(t, ok)
+			}
+		})
+	}
+
 }

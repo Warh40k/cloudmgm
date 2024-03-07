@@ -25,6 +25,9 @@ type FileService struct {
 }
 
 func (s FileService) UploadFile(volumePath string, file multipart.File, fileName string, fs afero.Fs) (string, error) {
+	if fileName == "" {
+		return "", errors.New("error empty filename")
+	}
 	// Get unique name for file
 	exist, err := afero.Exists(fs, volumePath+"/"+fileName)
 	if err != nil {
@@ -34,11 +37,17 @@ func (s FileService) UploadFile(volumePath string, file multipart.File, fileName
 	if exist {
 		// try to alter name to get unique one
 		dotIndex := strings.LastIndex(fileName, ".")
-		nameParts := []string{fileName[:dotIndex], fileName[dotIndex:]}
+		var nameParts [2]string
+		if dotIndex != -1 {
+			nameParts = [2]string{fileName[:dotIndex], fileName[dotIndex:]}
+		} else {
+			nameParts = [2]string{fileName, ""}
+		}
 		var i int
 
 		for i = 1; i < IterCount; i++ {
 			fileName = fmt.Sprintf("%s(%d)%s", nameParts[0], i, nameParts[1])
+
 			exist, err = afero.Exists(fs, volumePath+"/"+fileName)
 			if err != nil {
 				return "", err
