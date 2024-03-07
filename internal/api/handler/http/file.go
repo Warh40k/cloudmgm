@@ -1,10 +1,12 @@
-package handler
+package http
 
 import (
 	"encoding/json"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
+	"github.com/spf13/afero"
+	"github.com/spf13/viper"
 	"log/slog"
 	"mime"
 	"net/http"
@@ -39,7 +41,9 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fileName, err := h.services.UploadFile(volumeId, &file, header)
+	fs := afero.NewOsFs()
+	volumePath := viper.GetString("files.save_path") + "/" + volumeId.String()
+	fileName, err := h.services.UploadFile(volumePath, file, header.Filename, fs)
 	if err != nil {
 		log.With(slog.String("err", err.Error())).Error("failed to save file")
 		http.Error(w, err.Error(), http.StatusBadRequest)

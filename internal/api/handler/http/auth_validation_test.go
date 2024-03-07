@@ -1,4 +1,4 @@
-package handler
+package http
 
 import (
 	"github.com/go-playground/validator/v10"
@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestAuthRequest(t *testing.T) {
+func TestAuthRequest_Validate(t *testing.T) {
 	tests := []struct {
 		Label       string
 		request     AuthRequest

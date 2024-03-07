@@ -1,4 +1,4 @@
-package handler
+package http
 
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/service"

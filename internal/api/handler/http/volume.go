@@ -1,10 +1,10 @@
-package handler
+package http
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Warh40k/cloud-manager/internal/api/handler/utils"
+	"github.com/Warh40k/cloud-manager/internal/api/handler/http/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
