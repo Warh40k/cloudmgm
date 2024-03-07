@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/Warh40k/cloud-manager/internal/api/handler"
+	httpServ "github.com/Warh40k/cloud-manager/internal/api/handler/http"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
@@ -78,7 +78,7 @@ func main() {
 
 	repos := repository.NewRepository(db, log)
 	services := service.NewService(repos, log)
-	handlers := handler.NewHandler(services, log)
+	handlers := httpServ.NewHandler(services, log)
 	serv := new(app.App)
 
 	quit := make(chan os.Signal, 1)

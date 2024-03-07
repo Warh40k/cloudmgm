@@ -6,7 +6,7 @@ import (
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
-	"github.com/spf13/viper"
+	"github.com/spf13/afero"
 	"io"
 	"math"
 	"mime/multipart"
@@ -24,42 +24,45 @@ type FileService struct {
 	repos repository.File
 }
 
-func (s FileService) UploadFile(volumeId uuid.UUID, file *multipart.File, header *multipart.FileHeader) (string, error) {
-	path := viper.GetString("files.save_path") + "/" + volumeId.String()
-
+func (s FileService) UploadFile(volumePath string, file multipart.File, fileName string, fs afero.Fs) (string, error) {
 	// Get unique name for file
-	_, err := os.Stat(path + "/" + header.Filename)
-	if os.IsNotExist(err) {
-		return header.Filename, nil
+	exist, err := afero.Exists(fs, volumePath+"/"+fileName)
+	if err != nil {
+		return "", err
 	}
+	// If no filename existed before
+	if exist {
+		// try to alter name to get unique one
+		dotIndex := strings.LastIndex(fileName, ".")
+		nameParts := []string{fileName[:dotIndex], fileName[dotIndex:]}
+		var i int
 
-	dotIndex := strings.LastIndex(header.Filename, ".")
-	nameParts := []string{header.Filename[:dotIndex], header.Filename[dotIndex:]}
-	var resultName string
-	var i int
-
-	for i = 1; i < IterCount; i++ {
-		resultName = fmt.Sprintf("%s(%d)%s", nameParts[0], i, nameParts[1])
-		if _, err = os.Stat(path + "/" + resultName); os.IsNotExist(err) {
-			break
+		for i = 1; i < IterCount; i++ {
+			fileName = fmt.Sprintf("%s(%d)%s", nameParts[0], i, nameParts[1])
+			exist, err = afero.Exists(fs, volumePath+"/"+fileName)
+			if err != nil {
+				return "", err
+			}
+			if !exist {
+				break
+			}
+		}
+		if !(i < IterCount) {
+			return "", ErrTypeExceeded
 		}
 	}
 
-	if !(i < IterCount) {
-		return "", ErrTypeExceeded
-	}
-
-	dst, err := os.Create(path + "/" + resultName)
+	dst, err := fs.Create(volumePath + "/" + fileName)
 	if err != nil {
 		return "", err
 	}
 	defer dst.Close()
 
-	if _, err = io.Copy(dst, *file); err != nil {
+	if _, err = io.Copy(dst, file); err != nil {
 		return "", err
 	}
 
-	return resultName, nil
+	return fileName, nil
 }
 
 func (s FileService) ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error) {

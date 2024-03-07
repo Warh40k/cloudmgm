@@ -3,6 +3,7 @@ package service
 import (
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
+	"github.com/spf13/afero"
 	"log/slog"
 	"mime/multipart"
 )
@@ -38,7 +39,7 @@ type File interface {
 	GetFileInfo(id uuid.UUID) (domain.File, error)
 	ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error)
 	SearchFile(filename string) ([]File, error)
-	UploadFile(volumeId uuid.UUID, file *multipart.File, header *multipart.FileHeader) (string, error)
+	UploadFile(volumePath string, file multipart.File, fileName string, fs afero.Fs) (string, error)
 	//GetFileInfo(fileId uuid.UUID) (multipart.File, error)
 }
 
