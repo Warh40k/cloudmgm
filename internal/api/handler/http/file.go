@@ -2,6 +2,8 @@ package http
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -9,7 +11,9 @@ import (
 	"github.com/spf13/viper"
 	"log/slog"
 	"mime"
+	"mime/multipart"
 	"net/http"
+	"sync"
 )
 
 func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
@@ -24,6 +28,7 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	volumeId, err := uuid.Parse(volumeIdParam)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	err = r.ParseMultipartForm(1 << 20)
@@ -63,6 +68,113 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+}
+
+type UploadError struct {
+	Filename string
+	Message  string
+	Err      error
+}
+
+func (e UploadError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Filename, e.Message)
+}
+
+func (h *Handler) UploadMultipleFiles(w http.ResponseWriter, r *http.Request) {
+	const op = "File.UploadFile"
+	volumeIdParam := chi.URLParam(r, "volume_id")
+
+	log := h.log.With(
+		slog.String("op", op),
+		slog.String("file id", volumeIdParam),
+	)
+
+	volumeId, err := uuid.Parse(volumeIdParam)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	err = r.ParseMultipartForm(1 << 20)
+	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to parse multipart form")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	files := r.MultipartForm.File["files"]
+	errs := make(chan error, len(files))
+	var results = make([]uuid.UUID, len(files))
+
+	wg := sync.WaitGroup{}
+	for i, fileHeader := range files {
+		wg.Add(1)
+		go h.UploadFileWorker(i, fileHeader, &wg, errs, volumeId, results)
+	}
+	wg.Wait()
+	close(errs)
+
+	for err = range errs {
+		var uploadErr UploadError
+		errors.As(err, &uploadErr)
+		log.With(slog.String("err", err.Error()),
+			slog.String("filename", uploadErr.Filename)).
+			Error(uploadErr.Error())
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+
+	resp, err := json.Marshal(results)
+	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to create json response")
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Write(resp)
+}
+
+func (h *Handler) UploadFileWorker(i int, fileHeader *multipart.FileHeader, wg *sync.WaitGroup, errs chan<- error, volumeId uuid.UUID, results []uuid.UUID) {
+	defer wg.Done()
+
+	file, err := fileHeader.Open()
+	if err != nil {
+		errs <- UploadError{
+			Filename: fileHeader.Filename,
+			Message:  "failed to open file",
+			Err:      err,
+		}
+		return
+	}
+	defer file.Close()
+	fs := afero.NewOsFs()
+	volumePath := viper.GetString("files.save_path") + "/" + volumeId.String()
+	saveName, err := h.services.UploadFile(volumePath, file, fileHeader.Filename, fs)
+	if err != nil {
+		errs <- UploadError{
+			Filename: fileHeader.Filename,
+			Message:  "failed to upload file",
+			Err:      err,
+		}
+		return
+	}
+	id, err := h.services.CreateFile(domain.File{
+		VolumeId: volumeId,
+		Name:     saveName,
+		Size:     fileHeader.Size,
+	})
+	if err != nil {
+		errs <- UploadError{
+			Filename: fileHeader.Filename,
+			Message:  "failed to save file info",
+			Err:      err,
+		}
+		return
+	}
+	results[i] = id
+}
+
+func (h *Handler) DownloadMultipleFiles(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {

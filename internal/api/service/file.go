@@ -18,7 +18,7 @@ var (
 	ErrTypeExceeded = errors.New("iter counts overflow")
 )
 
-const IterCount = math.MaxInt16
+const IterCount = math.MaxInt8
 
 type FileService struct {
 	repos repository.File
@@ -56,7 +56,7 @@ func (s FileService) UploadFile(volumePath string, file multipart.File, fileName
 				break
 			}
 		}
-		if !(i < IterCount) {
+		if i == IterCount-1 {
 			return "", ErrTypeExceeded
 		}
 	}
