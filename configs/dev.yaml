@@ -11,3 +11,7 @@ db:
   sslmode: "disable"
 files:
   save_path: "data/files"
+cache:
+  addr: "localhost"
+  port: "6379"
+  db: 0
