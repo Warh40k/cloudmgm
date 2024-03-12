@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"github.com/Warh40k/cloud-manager/internal/api/cache"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/api/service/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
@@ -12,10 +13,11 @@ import (
 type AuthService struct {
 	repos repository.Authorization
 	log   *slog.Logger
+	cache *cache.Cache
 }
 
-func NewAuthService(repos repository.Authorization, log *slog.Logger) *AuthService {
-	return &AuthService{repos: repos, log: log}
+func NewAuthService(repos repository.Authorization, cache *cache.Cache, log *slog.Logger) *AuthService {
+	return &AuthService{repos: repos, cache: cache, log: log}
 }
 
 func (s *AuthService) SignUp(user domain.User) error {

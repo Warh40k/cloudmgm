@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"errors"
+	"github.com/Warh40k/cloud-manager/internal/api/cache"
+	"github.com/Warh40k/cloud-manager/internal/api/cache/redis_cache"
 	httpServ "github.com/Warh40k/cloud-manager/internal/api/handler/http"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
@@ -62,7 +64,7 @@ func main() {
 
 	log := setupLogger(viper.GetString("env"))
 
-	config := postgres.Config{
+	pgCfg := postgres.Config{
 		Host:     viper.GetString("db.host"),
 		Port:     viper.GetString("db.port"),
 		Username: viper.GetString("db.username"),
@@ -70,14 +72,28 @@ func main() {
 		DBName:   viper.GetString("db.dbname"),
 		SSLMode:  viper.GetString("db.sslmode"),
 	}
-	db, err := postgres.NewPostgresDB(config)
-
+	db, err := postgres.NewPostgresDB(pgCfg)
 	if err != nil {
-		logrus.Fatalf("Ошибка подключения к базе данных: %s", err.Error())
+		log.Error("Ошибка подключения к базе данных: %s", err.Error())
+		return
+	}
+
+	//redis
+	rdCfg := redis_cache.Config{
+		Addr:     viper.GetString("cache.addr"),
+		Password: os.Getenv("REDIS_PASSWORD"),
+		DB:       viper.GetInt("cache.db"),
+	}
+	ctx := context.Background()
+	rd, err := redis_cache.NewRedisConn(ctx, rdCfg)
+	if err != nil {
+		log.Error("Ошибка подключения к кэшу: %s", err.Error())
+		return
 	}
 
 	repos := repository.NewRepository(db, log)
-	services := service.NewService(repos, log)
+	cacheDb := cache.NewCache(ctx, rd)
+	services := service.NewService(repos, cacheDb, log)
 	handlers := httpServ.NewHandler(services, log)
 	serv := new(app.App)
 

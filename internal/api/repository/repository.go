@@ -25,7 +25,7 @@ type Volume interface {
 type File interface {
 	CreateFile(file domain.File) (uuid.UUID, error)
 	DeleteFileInfo(id uuid.UUID) error
-	GetFile(id uuid.UUID) (domain.File, error)
+	GetFileInfo(id uuid.UUID) (domain.File, error)
 	SearchFile(filename string) ([]domain.File, error)
 	ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error)
 }

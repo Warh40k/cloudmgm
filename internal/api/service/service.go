@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/Warh40k/cloud-manager/internal/api/cache"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/spf13/afero"
@@ -46,10 +47,10 @@ type File interface {
 	//GetFileInfo(fileId uuid.UUID) (multipart.File, error)
 }
 
-func NewService(repos *repository.Repository, log *slog.Logger) *Service {
+func NewService(repos *repository.Repository, cache *cache.Cache, log *slog.Logger) *Service {
 	return &Service{
-		Authorization: NewAuthService(repos.Authorization, log),
-		Volume:        NewVolumeService(repos.Volume, log),
-		File:          NewFileService(repos.File, log),
+		Authorization: NewAuthService(repos.Authorization, cache, log),
+		Volume:        NewVolumeService(repos.Volume, cache, log),
+		File:          NewFileService(repos.File, cache, log),
 	}
 }

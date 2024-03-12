@@ -4,9 +4,11 @@ import (
 	"archive/zip"
 	"errors"
 	"fmt"
+	"github.com/Warh40k/cloud-manager/internal/api/cache"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/afero"
 	"io"
 	"log/slog"
@@ -25,11 +27,12 @@ const IterCount = math.MaxInt8
 
 type FileService struct {
 	repos repository.File
+	cache *cache.Cache
 	log   *slog.Logger
 }
 
-func NewFileService(repos repository.File, log *slog.Logger) *FileService {
-	return &FileService{repos: repos, log: log}
+func NewFileService(repos repository.File, cache *cache.Cache, log *slog.Logger) *FileService {
+	return &FileService{repos: repos, cache: cache, log: log}
 }
 
 type fileContainer struct {
@@ -197,7 +200,23 @@ func (s FileService) DeleteFile(fileId uuid.UUID) error {
 }
 
 func (s FileService) GetFileInfo(id uuid.UUID) (domain.File, error) {
-	return s.repos.GetFile(id)
+	var file domain.File
+	cached, err := s.cache.GetFileInfo(id)
+
+	if err == nil {
+		return cached, nil
+	}
+	if !errors.Is(err, redis.Nil) {
+		return cached, err
+	}
+
+	file, err = s.repos.GetFileInfo(id)
+	if err != nil {
+		return file, err
+	}
+	err = s.cache.SetFileInfo(file)
+
+	return file, err
 }
 
 func (s FileService) SearchFile(filename string) ([]domain.File, error) {

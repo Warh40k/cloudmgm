@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/Warh40k/cloud-manager/internal/api/cache"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
@@ -9,11 +10,12 @@ import (
 
 type VolumeService struct {
 	repos repository.Volume
+	cache *cache.Cache
 	log   *slog.Logger
 }
 
-func NewVolumeService(repos repository.Volume, log *slog.Logger) *VolumeService {
-	return &VolumeService{repos: repos, log: log}
+func NewVolumeService(repos repository.Volume, cache *cache.Cache, log *slog.Logger) *VolumeService {
+	return &VolumeService{repos: repos, cache: cache, log: log}
 }
 
 func (s VolumeService) ResizeVolume(userId uuid.UUID, amount int) error {

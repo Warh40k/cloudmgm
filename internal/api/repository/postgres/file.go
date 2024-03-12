@@ -44,7 +44,7 @@ func (r FilePostgres) DeleteFileInfo(fileId uuid.UUID) error {
 	return nil
 }
 
-func (r FilePostgres) GetFile(fileId uuid.UUID) (domain.File, error) {
+func (r FilePostgres) GetFileInfo(fileId uuid.UUID) (domain.File, error) {
 	var file domain.File
 	query := fmt.Sprintf(`SELECT * FROM %s where id = $1`, filesTable)
 	err := r.db.Get(&file, query, fileId)
