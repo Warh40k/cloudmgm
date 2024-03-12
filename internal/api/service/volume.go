@@ -4,10 +4,16 @@ import (
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
+	"log/slog"
 )
 
 type VolumeService struct {
 	repos repository.Volume
+	log   *slog.Logger
+}
+
+func NewVolumeService(repos repository.Volume, log *slog.Logger) *VolumeService {
+	return &VolumeService{repos: repos, log: log}
 }
 
 func (s VolumeService) ResizeVolume(userId uuid.UUID, amount int) error {
@@ -41,8 +47,4 @@ func (s VolumeService) DeleteVolume(vmId uuid.UUID) error {
 
 func (s VolumeService) UpdateVolume(machine domain.Volume) error {
 	return s.repos.UpdateVolume(machine)
-}
-
-func NewVolumeService(repos repository.Volume) *VolumeService {
-	return &VolumeService{repos: repos}
 }

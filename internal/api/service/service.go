@@ -12,6 +12,8 @@ import (
 	"github.com/google/uuid"
 )
 
+//go:generate mockery --all --dry-run=false
+
 type Service struct {
 	Authorization
 	Volume
@@ -38,15 +40,16 @@ type File interface {
 	DeleteFile(fileId uuid.UUID) error
 	GetFileInfo(id uuid.UUID) (domain.File, error)
 	ListVolumeFiles(volumeId uuid.UUID) ([]domain.File, error)
-	SearchFile(filename string) ([]File, error)
+	SearchFile(filename string) ([]domain.File, error)
 	UploadFile(volumePath string, file multipart.File, fileName string, fs afero.Fs) (string, error)
+	ComposeZipArchive(files []domain.File, fs afero.Fs) (string, error)
 	//GetFileInfo(fileId uuid.UUID) (multipart.File, error)
 }
 
 func NewService(repos *repository.Repository, log *slog.Logger) *Service {
 	return &Service{
-		Authorization: NewAuthService(repos.Authorization),
-		Volume:        NewVolumeService(repos.Volume),
-		File:          NewFileService(repos.File),
+		Authorization: NewAuthService(repos.Authorization, log),
+		Volume:        NewVolumeService(repos.Volume, log),
+		File:          NewFileService(repos.File, log),
 	}
 }

@@ -6,14 +6,16 @@ import (
 	"github.com/Warh40k/cloud-manager/internal/api/service/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
+	"log/slog"
 )
 
 type AuthService struct {
 	repos repository.Authorization
+	log   *slog.Logger
 }
 
-func NewAuthService(repos repository.Authorization) *AuthService {
-	return &AuthService{repos: repos}
+func NewAuthService(repos repository.Authorization, log *slog.Logger) *AuthService {
+	return &AuthService{repos: repos, log: log}
 }
 
 func (s *AuthService) SignUp(user domain.User) error {
