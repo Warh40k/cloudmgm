@@ -1,6 +1,7 @@
 package http
 
 import (
+	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
 	genericMiddleware "github.com/Warh40k/cloud-manager/internal/middleware"
 	"github.com/go-chi/chi/v5"
@@ -15,6 +16,16 @@ type Handler struct {
 
 func NewHandler(services *service.Service, log *slog.Logger) *Handler {
 	return &Handler{services: services, log: log}
+}
+
+type UploadError struct {
+	Filename string
+	Message  string
+	Err      error
+}
+
+func (e UploadError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Filename, e.Message)
 }
 
 func (h *Handler) InitRoutes() *chi.Mux {

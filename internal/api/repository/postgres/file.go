@@ -27,7 +27,7 @@ func (r FilePostgres) CreateFile(file domain.File) (uuid.UUID, error) {
 
 	vmQuery := fmt.Sprintf(`INSERT INTO %s(id, volume_id, name, size, link) 
 								VALUES($1,$2,$3,$4,$5)`, filesTable)
-	_, err := r.db.Exec(vmQuery, file.Id, file.VolumeId, file.Name, file.Size, file.Link)
+	_, err := r.db.Exec(vmQuery, file.Id, file.VolumeId, file.Filename, file.Size, file.Link)
 	if err != nil {
 		return uuid.Nil, response.ErrInternal
 	}

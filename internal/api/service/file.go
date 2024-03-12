@@ -1,6 +1,7 @@
 package service
 
 import (
+	"archive/zip"
 	"errors"
 	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
@@ -8,10 +9,12 @@ import (
 	"github.com/google/uuid"
 	"github.com/spf13/afero"
 	"io"
+	"log/slog"
 	"math"
 	"mime/multipart"
 	"os"
 	"strings"
+	"sync"
 )
 
 var (
@@ -22,6 +25,99 @@ const IterCount = math.MaxInt8
 
 type FileService struct {
 	repos repository.File
+	log   *slog.Logger
+}
+
+func NewFileService(repos repository.File, log *slog.Logger) *FileService {
+	return &FileService{repos: repos, log: log}
+}
+
+type fileContainer struct {
+	file   *afero.File
+	header domain.File
+}
+
+func fileConsumer(writer *zip.Writer, data <-chan fileContainer, done chan<- bool, errs chan<- error) {
+	for f := range data {
+		zipFile, err := writer.Create(f.header.Filename)
+		if err != nil {
+			errs <- fmt.Errorf("failed to create file in archive")
+			done <- false
+			return
+		}
+		_, err = io.Copy(zipFile, *f.file)
+		if err != nil {
+			errs <- fmt.Errorf("failed to write file in archive")
+			done <- false
+			return
+		}
+		(*f.file).Close()
+	}
+	done <- true
+}
+
+func (s FileService) ComposeZipArchive(fileHeaders []domain.File, fs afero.Fs) (string, error) {
+	// нужна сервисная горутина, которая будет получать данные из канала и последовательно записывать их в архив
+	// создать подкаталог в fs.TempDir и там архив
+	// archive, err := afero.TempFile(fs, "", fmt.Sprintf("%s.zip", time.Now().String()))
+	const op = "File.Service.ComposeZipArchive"
+	log := s.log.With(
+		slog.String("op", op),
+	)
+
+	//archivePath := strings.Join([]string{afero.GetTempDir(fs, ""), "archive.zip"}, "/")
+	archive, err := afero.TempFile(fs, "", "*.zip")
+	if err != nil {
+		return "", err
+	}
+
+	zipWriter := zip.NewWriter(archive)
+	defer func() {
+		zipWriter.Close()
+		archive.Close()
+	}()
+
+	data := make(chan fileContainer, len(fileHeaders))
+	done := make(chan bool)
+	consumerErrs := make(chan error, len(fileHeaders))
+	senderErrs := make(chan error, len(fileHeaders))
+	wg := sync.WaitGroup{}
+
+	go fileConsumer(zipWriter, data, done, consumerErrs)
+
+	for _, header := range fileHeaders {
+		wg.Add(1)
+		go func(header domain.File, wg *sync.WaitGroup) {
+			defer wg.Done()
+			file, err := fs.Open(header.GetPath())
+			if err != nil {
+				senderErrs <- fmt.Errorf("failed to open file %s", header.Filename)
+				return
+			}
+			data <- struct {
+				file   *afero.File
+				header domain.File
+			}{file: &file, header: header}
+		}(header, &wg)
+	}
+
+	wg.Wait()
+	close(data)
+	close(senderErrs)
+	ok := <-done
+	close(consumerErrs)
+
+	for err = range senderErrs {
+		log.With(slog.String("err", err.Error())).Error("failed to send file to zip")
+	}
+
+	for err = range consumerErrs {
+		log.With(slog.String("err", err.Error())).Error("failed to write file in zip")
+	}
+	if !ok {
+		err = fmt.Errorf("failed to create archive")
+	}
+	return archive.Name(), err
 }
 
 func (s FileService) UploadFile(volumePath string, file multipart.File, fileName string, fs afero.Fs) (string, error) {
@@ -104,10 +200,6 @@ func (s FileService) GetFileInfo(id uuid.UUID) (domain.File, error) {
 	return s.repos.GetFile(id)
 }
 
-func (s FileService) SearchFile(filename string) ([]File, error) {
+func (s FileService) SearchFile(filename string) ([]domain.File, error) {
 	panic("not implemented")
-}
-
-func NewFileService(repos repository.File) *FileService {
-	return &FileService{repos: repos}
 }

@@ -3,7 +3,6 @@ package http
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
@@ -13,6 +12,7 @@ import (
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -58,9 +58,8 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	// save file info in db
 	var fileEntity = domain.File{
 		VolumeId: volumeId,
-		Name:     fileName,
+		Filename: fileName,
 		Size:     header.Size,
-		Link:     "",
 	}
 
 	_, err = h.services.CreateFile(fileEntity)
@@ -68,16 +67,6 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-}
-
-type UploadError struct {
-	Filename string
-	Message  string
-	Err      error
-}
-
-func (e UploadError) Error() string {
-	return fmt.Sprintf("%s: %s", e.Filename, e.Message)
 }
 
 func (h *Handler) UploadMultipleFiles(w http.ResponseWriter, r *http.Request) {
@@ -159,7 +148,7 @@ func (h *Handler) UploadFileWorker(i int, fileHeader *multipart.FileHeader, wg *
 	}
 	id, err := h.services.CreateFile(domain.File{
 		VolumeId: volumeId,
-		Name:     saveName,
+		Filename: saveName,
 		Size:     fileHeader.Size,
 	})
 	if err != nil {
@@ -174,7 +163,56 @@ func (h *Handler) UploadFileWorker(i int, fileHeader *multipart.FileHeader, wg *
 }
 
 func (h *Handler) DownloadMultipleFiles(w http.ResponseWriter, r *http.Request) {
+	const op = "File.Handler.DownloadMultipleFiles"
+	log := h.log.With(
+		slog.String("op", op),
+	)
 
+	var ids []uuid.UUID
+	err := json.NewDecoder(r.Body).Decode(&ids)
+	if err != nil {
+		log.With(slog.String("err", err.Error())).Error("failed to parse uuids")
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	filesInfo := make([]domain.File, len(ids))
+
+	wg := sync.WaitGroup{}
+	errs := make(chan error, len(filesInfo))
+
+	// getting files info
+	for i, id := range ids {
+		wg.Add(1)
+		go func(i int, id uuid.UUID) {
+			defer wg.Done()
+			file, err := h.services.GetFileInfo(id)
+			if err != nil {
+				log.With(slog.String("err", err.Error()),
+					slog.String("file_id", id.String())).
+					Error("failed to get file info")
+				errs <- err
+				return
+			}
+			filesInfo[i] = file
+		}(i, id)
+	}
+	wg.Wait()
+
+	fs := afero.NewOsFs()
+	archive, err := h.services.ComposeZipArchive(filesInfo, fs)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer fs.Remove(archive)
+
+	last := strings.LastIndex(archive, "/")
+	filename := archive[last+1:]
+	attHeader := mime.FormatMediaType("attachment", map[string]string{"filename": filename})
+	r.Header.Set("Content-Disposition", attHeader)
+	r.Header.Set("Content-Type", "application/octet-stream")
+
+	http.ServeFile(w, r, archive)
 }
 
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
@@ -197,7 +235,6 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
 	}
-
 }
 
 func (h *Handler) GetFileInfo(w http.ResponseWriter, r *http.Request) {
@@ -263,7 +300,7 @@ func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attHeader := mime.FormatMediaType("attachment", map[string]string{"filename": fileInfo.Name})
+	attHeader := mime.FormatMediaType("attachment", map[string]string{"filename": fileInfo.Filename})
 	r.Header.Set("Content-Disposition", attHeader)
 	r.Header.Set("Content-Type", "application/octet-stream")
 

@@ -9,7 +9,7 @@ import (
 type File struct {
 	Id       uuid.UUID `json:"id" db:"id"`
 	VolumeId uuid.UUID `json:"volume_id" db:"volume_id"`
-	Name     string    `json:"name" db:"name"`
+	Filename string    `json:"name" db:"name"`
 	Size     int64     `json:"size" db:"size"`
 	Link     string    `json:"link" db:"link"`
 	Created  time.Time `json:"created" db:"created"`
@@ -17,5 +17,5 @@ type File struct {
 
 func (f *File) GetPath() string {
 	return viper.GetString("files.save_path") + "/" +
-		f.VolumeId.String() + "/" + f.Name
+		f.VolumeId.String() + "/" + f.Filename
 }
