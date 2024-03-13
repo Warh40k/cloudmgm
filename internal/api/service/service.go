@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"github.com/Warh40k/cloud-manager/internal/api/cache"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/domain"
@@ -13,8 +14,14 @@ import (
 	"github.com/google/uuid"
 )
 
-//go:generate mockery --all --dry-run=false
+var (
+	ErrNotFound     = errors.New("not found")
+	ErrBadRequest   = errors.New("bad request")
+	ErrInternal     = errors.New("internal errors")
+	ErrUnauthorized = errors.New("not authorized")
+)
 
+//go:generate mockery --all --dry-run=false
 type Service struct {
 	Authorization
 	Volume

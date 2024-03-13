@@ -1,6 +1,7 @@
 package postgres
 
 import (
+	"errors"
 	"fmt"
 	_ "github.com/jackc/pgx/stdlib"
 	"github.com/jmoiron/sqlx"
@@ -11,6 +12,12 @@ const (
 	volumesTable      = "volumes"
 	usersVolumesTable = "users_volumes"
 	filesTable        = "files"
+)
+
+var (
+	ErrUnique   = errors.New("unique costraint violation")
+	ErrNoRows   = errors.New("no rows in relation")
+	ErrInternal = errors.New("internal error")
 )
 
 type Config struct {

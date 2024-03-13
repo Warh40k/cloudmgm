@@ -3,7 +3,6 @@ package postgres
 import (
 	"errors"
 	"fmt"
-	"github.com/Warh40k/cloud-manager/internal/api/repository/response"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx"
@@ -29,10 +28,10 @@ func (r *AuthPostgres) SignUp(user domain.User) (uuid.UUID, error) {
 	if err := row.Scan(&id); err != nil {
 		var pgErr pgx.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == uniqueErrCode {
-			return uuid.Nil, response.ErrUnique
+			return uuid.Nil, ErrUnique
 		}
 
-		return uuid.Nil, response.ErrInternal
+		return uuid.Nil, ErrInternal
 	}
 	return id, nil
 }
@@ -44,9 +43,9 @@ func (r *AuthPostgres) GetUserByUsername(username string) (domain.User, error) {
 	if err != nil {
 		var pgErr pgx.PgError
 		if errors.As(err, &pgErr) {
-			return user, response.ErrInternal
+			return user, ErrInternal
 		} else {
-			return user, response.ErrNoRows
+			return user, ErrNoRows
 		}
 	}
 	return user, nil
