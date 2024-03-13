@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/Warh40k/cloud-manager/internal/api/cache"
 	"github.com/Warh40k/cloud-manager/internal/api/cache/redis_cache"
-	httpServ "github.com/Warh40k/cloud-manager/internal/api/handler/http"
+	"github.com/Warh40k/cloud-manager/internal/api/handler/httpserver"
 	"github.com/Warh40k/cloud-manager/internal/api/repository"
 	"github.com/Warh40k/cloud-manager/internal/api/repository/postgres"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
@@ -94,7 +94,7 @@ func main() {
 	repos := repository.NewRepository(db, log)
 	cacheDb := cache.NewCache(ctx, rd)
 	services := service.NewService(repos, cacheDb, log)
-	handlers := httpServ.NewHandler(services, log)
+	handlers := httpserver.NewHandler(services, log)
 	serv := new(app.App)
 
 	quit := make(chan os.Signal, 1)

@@ -15,8 +15,10 @@ import (
 	"math"
 	"mime/multipart"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
+	"unicode"
 )
 
 var (
@@ -221,4 +223,36 @@ func (s FileService) GetFileInfo(id uuid.UUID) (domain.File, error) {
 
 func (s FileService) SearchFile(filename string) ([]domain.File, error) {
 	panic("not implemented")
+}
+
+func ConvertSizeToBytes(amount string, increase bool) (int, error) {
+	var num, modifier int
+	var units string
+	var err error
+
+	for i, char := range amount {
+		if !unicode.IsDigit(char) {
+			num, err = strconv.Atoi(amount[:i])
+			if err != nil {
+				return 0, err
+			}
+			units = amount[i:]
+			break
+		}
+	}
+
+	switch units {
+	case "G":
+		modifier = 1 << 30
+	case "M":
+		modifier = 1 << 20
+	case "K":
+		modifier = 1 << 10
+	}
+
+	if !increase {
+		modifier = -modifier
+	}
+
+	return num * modifier, nil
 }

@@ -1,9 +1,8 @@
-package http
+package httpserver
 
 import (
 	"fmt"
 	"github.com/Warh40k/cloud-manager/internal/api/service"
-	genericMiddleware "github.com/Warh40k/cloud-manager/internal/middleware"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"log/slog"
@@ -38,7 +37,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 		r.Get("/auth", h.SignIn)
 		r.Post("/register", h.SignUp)
 		r.Route("/volumes", func(r chi.Router) {
-			r.Use(genericMiddleware.CheckAuth)
+			r.Use(CheckAuth)
 			r.Get("/", h.ListVolumes)
 			r.Post("/", h.CreateVolume)
 			r.Route("/{volume_id}", func(r chi.Router) {
@@ -46,7 +45,7 @@ func (h *Handler) InitRoutes() *chi.Mux {
 				r.Get("/", h.GetVolume)
 				r.Put("/", h.UpdateVolume)
 				r.Delete("/", h.DeleteVolume)
-				r.Post("/resize/", h.ResizeVolume)
+				//r.Post("/resize/", h.ResizeVolume)
 
 				r.Route("/files", func(r chi.Router) {
 					r.Post("/", h.UploadFile)

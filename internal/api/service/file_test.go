@@ -24,12 +24,13 @@ func LoadConfig(t *testing.T) {
 }
 
 func InitLayers(t *testing.T) *Service {
+	// TODO: add redis mock
 	db, _, err := sqlmock.New()
 	require.NoError(t, err)
 	dbx := sqlx.NewDb(db, "sqlmock")
 	log := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}))
 	repo := repository.NewRepository(dbx, log)
-	service := NewService(repo, log)
+	service := NewService(repo, nil, log)
 
 	return service
 }

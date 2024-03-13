@@ -1,10 +1,9 @@
-package http
+package httpserver
 
 import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/Warh40k/cloud-manager/internal/api/handler/http/utils"
 	"github.com/Warh40k/cloud-manager/internal/domain"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-playground/validator/v10"
@@ -159,26 +158,26 @@ type ResizeVmIn struct {
 	Amount   string `json:"amount" validate:"required"`
 }
 
-func (h *Handler) ResizeVolume(w http.ResponseWriter, r *http.Request) {
-	vmId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
-	}
-
-	var input ResizeVmIn
-
-	err = json.NewDecoder(r.Body).Decode(&input)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	size, err := utils.ConvertSizeToBytes(input.Amount, input.Increase)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	err = h.services.ResizeVolume(vmId, size)
-}
+//func (h *Handler) ResizeVolume(w http.ResponseWriter, r *http.Request) {
+//	vmId, err := uuid.Parse(chi.URLParam(r, "volume_id"))
+//	if err != nil {
+//		w.WriteHeader(http.StatusInternalServerError)
+//		return
+//	}
+//
+//	var input ResizeVmIn
+//
+//	err = json.NewDecoder(r.Body).Decode(&input)
+//	if err != nil {
+//		w.WriteHeader(http.StatusBadRequest)
+//		return
+//	}
+//
+//	size, err := utils.ConvertSizeToBytes(input.Amount, input.Increase)
+//	if err != nil {
+//		w.WriteHeader(http.StatusBadRequest)
+//		return
+//	}
+//
+//	err = h.services.ResizeVolume(vmId, size)
+//}
